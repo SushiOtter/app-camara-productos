@@ -34,3 +34,18 @@
 .public-grid .device-title { font-size: clamp(24px, 3vw, 39px); }
 .public-grid .device-copy { font-size: 11px; }
 .public-grid .device { border-radius: 20px; padding: 8px; }
+
+/* Vídeo real opcional por estación (archivos locales seleccionados por el empleado). */
+.device-screen.has-video { background: #191714; color: #fff; }
+.device-video { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.device-screen.has-video::before { z-index: -1; inset: 0; width: auto; border-radius: 0; background: linear-gradient(180deg, rgba(18,16,14,.42), rgba(18,16,14,.15) 42%, rgba(18,16,14,.78)); opacity: 1; filter: none; }
+.device-screen.has-video .device-top,
+.device-screen.has-video .device-content,
+.device-screen.has-video .device-bottom { color: #fff; }
+.device-screen.has-video .device-kicker,
+.device-screen.has-video .device-title,
+.device-screen.has-video .device-copy,
+.device-screen.has-video .device-bottom span:first-child,
+.device-screen.has-video .device-bottom span:last-child { color: #fff; }
+.device-screen.has-video .product-orbit,
+.device-screen.has-video .product-shape { display: none; }

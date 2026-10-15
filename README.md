@@ -19,12 +19,14 @@ No abras `index.html` con doble clic: los módulos JavaScript y el JSON necesita
 4. Para simular una estación concreta mientras estás en modo público, usa `Ctrl + Alt + 1..5`.
 5. Para probar detección real, vuelve a administración, asigna las cinco zonas horizontales a estaciones, pulsa **Activar cámara** y concede permiso. Las bibliotecas de IA se descargan solo al pulsar ese botón.
 6. Vuelve al modo público para que una presencia sostenida en una zona asignada pueda activar la estación correspondiente.
+7. En «Vídeos de demostración», asigna hasta dos archivos de vídeo a una estación. Usa «Probar recomendación» o `Ctrl + Alt + 1..5` en modo público para comprobar la reproducción.
 
 ## Funciones implementadas
 
 - Administración de familia, campaña y estado de cada estación.
 - Modo público sin controles visibles para visitantes.
 - Seis pantallas de previsualización con identidad visual diferenciada.
+- Carga opcional de hasta dos vídeos locales por estación; se reproducen en modo público al activarse la recomendación correspondiente. Los vídeos no se suben y se deben volver a seleccionar después de recargar la página.
 - Configuración comercial en `data/contenido.json`.
 - Motor de eventos `beautytech:event` y estados `idle`, `attention`, `playing`, `cooldown` y `disabled`.
 - Recomendación demostrativa de dos piezas por estación, con transición y regreso al reposo.
@@ -39,7 +41,7 @@ No abras `index.html` con doble clic: los módulos JavaScript y el JSON necesita
 - La zona se calcula dividiendo la imagen en cinco franjas horizontales. El empleado debe asociarlas manualmente a las estaciones visibles de izquierda a derecha. No es una calibración física de la tienda.
 - La presencia sostenida y el tamaño de la detección son aproximaciones, no una medición fiable de distancia o atención.
 - El código no guarda ni envía fotogramas. El navegador necesita permiso explícito para activar la cámara.
-- No se incluyen vídeos MP4 ni fotografías reales de producto; las pantallas usan composiciones CSS de demostración. El reproductor de vídeo real queda pendiente.
+- No se incluyen vídeos MP4 ni fotografías reales de producto. Si no se cargan vídeos locales, las pantallas usan composiciones CSS de demostración.
 - No incluye comunicación entre tablets físicas, backend, modo kiosco ni analítica de producción.
 - Para un despliegue real hay que revisar accesibilidad, rendimiento, dispositivos, consentimiento/información, base jurídica y obligaciones de privacidad con los responsables correspondientes.
 
@@ -68,6 +70,6 @@ No abras `index.html` con doble clic: los módulos JavaScript y el JSON necesita
 
 - Asegúrate de que la vista previa muestra tu imagen en directo y no está negra/congelada.
 - Ponte frente a la cámara con buena iluminación; al principio prueba mostrando cabeza y torso, no solo la cara ni una silueta muy pequeña.
-- Esta versión usa COCO-SSD para detectar cuerpos y BlazeFace como alternativa cuando solo se ve un rostro. La detección de rostro significa presencia aproximada, no identidad.
+- Esta versión usa sensibilidad alta: COCO-SSD se ejecuta con umbral explícito de 0,20 (su valor predeterminado suele ser 0,50), el filtro de personas es 0,18, el umbral de tamaño se ha reducido y la permanencia mínima es 0,85 s. BlazeFace complementa la detección cuando solo se ve un rostro. La detección de rostro significa presencia aproximada, no identidad.
 - Si indica que no puede descargar un modelo, comprueba conexión a internet y que la red no bloquee `cdn.jsdelivr.net`; pulsa Detener cámara y vuelve a activarla.
-- Si la cámara se ve pero no detecta nada, prueba Chrome o Edge actualizados y cierra aplicaciones que puedan estar usando la cámara.
+- Si la cámara se ve pero no detecta nada, prueba Chrome o Edge actualizados, cierra aplicaciones que puedan estar usando la cámara y evita que la cara quede muy pequeña en el encuadre. Si la IA falla por incompatibilidad gráfica, intenta cambiar a CPU automáticamente; la detección puede ir más lenta en ese modo.

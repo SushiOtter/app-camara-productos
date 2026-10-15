@@ -81,8 +81,30 @@
             <video id="camera-preview" class="camera-preview" muted playsinline aria-label="Vista previa de la cámara"></video>
             <canvas id="camera-overlay" class="camera-overlay" aria-hidden="true"></canvas>
           </div>
-          <div class="vision-status-wrap"><span class="vision-status-dot" id="camera-status-dot"></span><p id="camera-status" role="status" aria-live="polite">Cámara apagada. Puedes usar la simulación guiada si no quieres conceder acceso.</p><small id="camera-detail">Los modelos se descargan al activar la cámara y necesitan conexión a internet. Si no detecta, encuadra cabeza y torso, mejora la luz y acércate. El análisis se realiza en este navegador; no se guardan ni se envían imágenes.</small></div>
+          <div class="vision-status-wrap"><span class="vision-status-dot" id="camera-status-dot"></span><p id="camera-status" role="status" aria-live="polite">Cámara apagada. Puedes usar la simulación guiada si no quieres conceder acceso.</p><small id="camera-detail">La detección está ajustada a sensibilidad alta y confirma presencia tras 0,85 s. Los modelos se descargan al activar la cámara y necesitan internet. Evita contraluz y prueba a acercarte. El análisis se realiza en este navegador; no se guardan ni se envían imágenes.</small></div>
         </div>
+      </section>
+
+      <section class="vision-panel media-panel" aria-labelledby="media-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">CONTENIDO DE LAS ESTACIONES</p><h2 id="media-title">Vídeos de demostración</h2></div>
+          <span class="subtle-label">Archivos locales · sin subir a internet</span>
+        </div>
+        <p class="vision-copy">Elige una estación y carga hasta dos vídeos MP4/WebM. Cuando esa estación se active en modo público, se reproducirá el vídeo correspondiente al contenido recomendado. Los archivos se mantienen en memoria mientras esta pestaña esté abierta; al recargar, tendrás que seleccionarlos de nuevo.</p>
+        <div class="media-controls">
+          <label class="media-field" for="media-station">Estación
+            <select id="media-station" class="field-select"></select>
+          </label>
+          <label class="media-field" for="media-video-1">Vídeo 1
+            <input id="media-video-1" class="media-input" type="file" accept="video/mp4,video/webm,video/ogg,video/*">
+            <small id="media-name-1">Sin vídeo seleccionado</small>
+          </label>
+          <label class="media-field" for="media-video-2">Vídeo 2
+            <input id="media-video-2" class="media-input" type="file" accept="video/mp4,video/webm,video/ogg,video/*">
+            <small id="media-name-2">Sin vídeo seleccionado</small>
+          </label>
+        </div>
+        <p id="media-status" class="media-status" role="status" aria-live="polite">Carga contenido opcional para sustituir las composiciones visuales de demostración.</p>
       </section>
 
       <section class="preview-section" aria-labelledby="preview-title">

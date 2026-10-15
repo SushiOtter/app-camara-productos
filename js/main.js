@@ -5,6 +5,7 @@ import { initializeEventEngine } from "./events.js";
 import { initializeAdmin } from "./admin.js";
 import { detectionCapabilities } from "./detection.js";
 import { $ } from "./utils.js";
+import { initializeMediaControls } from "./media.js";
 
 async function boot() {
  try {
@@ -14,6 +15,7 @@ async function boot() {
   renderDevices();
   initializeEventEngine();
   initializeAdmin();
+  initializeMediaControls();
   $("#system-status").textContent = "Sistema preparado";
   console.info("Capacidades del prototipo:", detectionCapabilities);
  } catch (error) {

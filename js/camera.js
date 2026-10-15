@@ -25,14 +25,16 @@ let zoneAssignments = [];
 let librariesPromise = null;
 let startToken = 0;
 let lastStatusKey = "";
+let missedDetectionSince = 0;
+let cpuFallbackAttempted = false;
 const lastTriggerByStation = new Map();
-const MIN_PERSON_CONFIDENCE = 0.38;
-const MIN_FACE_CONFIDENCE = 0.45;
-const MIN_PERSON_AREA = 0.012;
-const MIN_FACE_AREA = 0.0035;
-const HOLD_MS = 1400;
+const MIN_PERSON_CONFIDENCE = 0.18;
+const MIN_FACE_CONFIDENCE = 0.25;
+const MIN_PERSON_AREA = 0.004;
+const MIN_FACE_AREA = 0.001;
+const HOLD_MS = 850;
 const TRIGGER_COOLDOWN_MS = 12000;
-const INFERENCE_INTERVAL_MS = 350;
+const INFERENCE_INTERVAL_MS = 260;
 const ZONE_COUNT = 5;
 
 function status(message, active = false) {
@@ -227,7 +229,9 @@ function drawOverlay(detection) {
 async function detectPresence() {
   let people = [];
   if (personModel) {
-    const predictions = await personModel.detect(video);
+    // COCO-SSD usa 0.5 como umbral predeterminado. Se fija explícitamente uno más bajo
+    // para no descartar detecciones válidas antes de que lleguen a nuestro filtro.
+    const predictions = await personModel.detect(video, 10, 0.20);
     people = predictions
       .filter(item => item.class === "person" && item.score >= MIN_PERSON_CONFIDENCE)
       .map(item => ({ bbox: item.bbox, score: item.score, kind: "person" }))
@@ -275,10 +279,16 @@ function scanFrame(now) {
       if (!stream) return;
       if (!detection) {
         drawOverlay(null);
-        resetPresence();
-        status("No detecto cuerpo ni rostro. Acércate, mejora la iluminación y encuadra cabeza y torso.", true);
+        // Una inferencia puede fallar un fotograma aunque la persona siga delante.
+        // Permitimos hasta 1,1 s sin detección antes de reiniciar la permanencia.
+        if (!missedDetectionSince) missedDetectionSince = performance.now();
+        if (performance.now() - missedDetectionSince > 1100) resetPresence();
+        status(personPresent
+          ? "Señal intermitente; mantén la posición un momento…"
+          : "Buscando persona o rostro… Prueba buena luz, evita contraluz y acércate.", true);
         return;
       }
+      missedDetectionSince = 0;
       drawOverlay(detection);
       const [x, , boxWidth, boxHeight] = detection.bbox;
       const areaRatio = Math.max(0, Math.min(1, (boxWidth * boxHeight) / Math.max(1, video.videoWidth * video.videoHeight)));
@@ -306,11 +316,24 @@ function scanFrame(now) {
       if (dwellMs >= HOLD_MS && !triggeredThisPresence) {
         onSustainedPresence({ confidence: detection.score, areaRatio, dwellMs, zone, station, kind: detection.kind });
       }
-    }).catch(error => {
+    }).catch(async error => {
       console.error("Error en la inferencia de visión:", error);
+      // Algunos equipos no soportan correctamente WebGL. Intentamos una sola vez
+      // cambiar TensorFlow.js a CPU en lugar de dejar la detección bloqueada.
+      if (!cpuFallbackAttempted && window.tf?.setBackend) {
+        cpuFallbackAttempted = true;
+        try {
+          status("Ajustando la IA para este equipo…", true);
+          await window.tf.setBackend("cpu");
+          await window.tf.ready();
+          status("IA ajustada. Reanudando detección…", true);
+          return;
+        } catch (backendError) {
+          console.warn("No se pudo cambiar el backend de IA:", backendError);
+        }
+      }
       inferenceFailed = true;
-      status(`La cámara funciona, pero la IA ha fallado: ${error?.message || "error de inferencia"}. Reinicia la cámara para volver a intentarlo.`);
-      // Pausamos la inferencia para evitar cientos de errores por segundo; la vista previa sigue visible.
+      status(`La cámara funciona, pero la IA ha fallado: ${error?.message || "error de inferencia"}. Pulsa Detener cámara y vuelve a activarla.`);
     }).finally(() => { inferenceBusy = false; });
   }
   if (stream) rafId = requestAnimationFrame(scanFrame);
