@@ -1,0 +1,12 @@
+/* Tipografías locales: coloca aquí Cormorant Garamond e Inter en formato WOFF2.
+   La demo utiliza Georgia/Segoe UI como alternativa si los archivos no están disponibles. */
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("../assets/fonts/cormorant-garamond.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("../assets/fonts/inter.woff2") format("woff2");
+  font-display: swap;
+}

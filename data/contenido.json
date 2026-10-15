@@ -1,0 +1,230 @@
+{
+  "settings": {
+    "cooldownMs": 8000,
+    "sessionTimeoutMs": 120000,
+    "attentionThresholdMs": 1800,
+    "maxConcurrent": 3
+  },
+  "stations": [
+    {
+      "id": "apparatology",
+      "name": "Aparatología",
+      "icon": "apparatology",
+      "family": "Tecnología facial",
+      "campaign": "Ritual tecnológico",
+      "headline": "Tecnología para tu piel",
+      "copy": "Precisión profesional, cuidado en cada detalle.",
+      "tags": [
+        "Limpieza avanzada",
+        "Energía facial",
+        "Cuidado experto"
+      ],
+      "tint": "#e7ddd0",
+      "deep": "#8b7259",
+      "video": "",
+      "clips": [
+        {
+          "id": "ap-01",
+          "title": "Tecnología que cuida",
+          "subtitle": "Ritual facial · 15 s",
+          "tags": [
+            "tecnología",
+            "cuidado",
+            "facial"
+          ],
+          "durationMs": 6000,
+          "video": ""
+        },
+        {
+          "id": "ap-02",
+          "title": "Un gesto profesional",
+          "subtitle": "Dispositivo destacado · 12 s",
+          "tags": [
+            "dispositivo",
+            "profesional",
+            "facial"
+          ],
+          "durationMs": 6000,
+          "video": ""
+        }
+      ]
+    },
+    {
+      "id": "makeup",
+      "name": "Maquillaje",
+      "icon": "makeup",
+      "family": "Maquillaje",
+      "campaign": "Piel luminosa",
+      "headline": "Tu luz, en primer plano",
+      "copy": "Texturas sensoriales y tonos que acompañan tu estilo.",
+      "tags": [
+        "Base ligera",
+        "Rubor en crema",
+        "Mirada luminosa"
+      ],
+      "tint": "#ead7d3",
+      "deep": "#a56e70",
+      "video": "",
+      "clips": [
+        {
+          "id": "mk-01",
+          "title": "Piel luminosa, sin esfuerzo",
+          "subtitle": "Campaña de maquillaje · 15 s",
+          "tags": [
+            "piel",
+            "luminosidad",
+            "base"
+          ],
+          "durationMs": 6000,
+          "video": ""
+        },
+        {
+          "id": "mk-02",
+          "title": "El color que lo cambia todo",
+          "subtitle": "Selección de tonos · 12 s",
+          "tags": [
+            "color",
+            "labios",
+            "tendencia"
+          ],
+          "durationMs": 6000,
+          "video": ""
+        }
+      ]
+    },
+    {
+      "id": "haircare",
+      "name": "Tratamientos capilares",
+      "icon": "haircare",
+      "family": "Cuidado capilar",
+      "campaign": "Ritual de reparación",
+      "headline": "Un ritual para tu cabello",
+      "copy": "Nutrición, brillo y suavidad desde la raíz hasta las puntas.",
+      "tags": [
+        "Champú nutritivo",
+        "Sérum reparador",
+        "Aceite de brillo"
+      ],
+      "tint": "#d9e0d5",
+      "deep": "#71856d",
+      "video": "",
+      "clips": [
+        {
+          "id": "hc-01",
+          "title": "El ritual empieza en el lavado",
+          "subtitle": "Cuidado capilar · 15 s",
+          "tags": [
+            "champú",
+            "nutrición",
+            "cabello"
+          ],
+          "durationMs": 6000,
+          "video": ""
+        },
+        {
+          "id": "hc-02",
+          "title": "Brillo que se nota",
+          "subtitle": "Sérum y acabado · 12 s",
+          "tags": [
+            "sérum",
+            "brillo",
+            "reparación"
+          ],
+          "durationMs": 6000,
+          "video": ""
+        }
+      ]
+    },
+    {
+      "id": "newness",
+      "name": "Novedades",
+      "icon": "newness",
+      "family": "Lanzamientos",
+      "campaign": "Selección editorial",
+      "headline": "Lo nuevo en belleza",
+      "copy": "Descubre las novedades que merecen un lugar en tu ritual.",
+      "tags": [
+        "Edición destacada",
+        "Nuevo lanzamiento",
+        "Favorito de temporada"
+      ],
+      "tint": "#e6dfcf",
+      "deep": "#a1844e",
+      "video": "",
+      "clips": [
+        {
+          "id": "nw-01",
+          "title": "Una novedad para descubrir",
+          "subtitle": "Lanzamiento destacado · 15 s",
+          "tags": [
+            "novedad",
+            "lanzamiento",
+            "campaña"
+          ],
+          "durationMs": 6000,
+          "video": ""
+        },
+        {
+          "id": "nw-02",
+          "title": "El favorito de la temporada",
+          "subtitle": "Selección editorial · 12 s",
+          "tags": [
+            "favorito",
+            "temporada",
+            "tendencia"
+          ],
+          "durationMs": 6000,
+          "video": ""
+        }
+      ]
+    },
+    {
+      "id": "haircolor",
+      "name": "Color de pelo",
+      "icon": "haircolor",
+      "family": "Coloración",
+      "campaign": "Color a tu manera",
+      "headline": "Encuentra tu próximo tono",
+      "copy": "Una paleta de posibilidades para expresar tu personalidad.",
+      "tags": [
+        "Rubios luminosos",
+        "Castaños ricos",
+        "Cobrizos expresivos"
+      ],
+      "tint": "#e3d5c4",
+      "deep": "#956c4b",
+      "video": "",
+      "clips": [
+        {
+          "id": "cl-01",
+          "title": "Encuentra tu próximo tono",
+          "subtitle": "Coloración · 15 s",
+          "tags": [
+            "tono",
+            "coloración",
+            "cabello"
+          ],
+          "durationMs": 6000,
+          "video": ""
+        },
+        {
+          "id": "cl-02",
+          "title": "Una paleta, muchas versiones",
+          "subtitle": "Inspiración de color · 12 s",
+          "tags": [
+            "paleta",
+            "rubios",
+            "cobrizos"
+          ],
+          "durationMs": 6000,
+          "video": ""
+        }
+      ]
+    }
+  ],
+  "sensor": {
+    "id": "entry",
+    "name": "Sensor de entrada",
+    "headline": "La experiencia empieza aquí"
+  }
+}

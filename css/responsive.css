@@ -1,0 +1,33 @@
+@media (min-width: 1500px) { .app-shell { padding-left: 76px; padding-right: 76px; } }
+@media (max-width: 1100px) {
+  .station-configs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .device-grid { gap: 13px; }
+  .control-panel { padding: 21px; }
+}
+@media (max-width: 760px) {
+  .app-shell { padding: 0 18px 28px; }
+  .topbar { min-height: 72px; }
+  .brand small, .live-indicator { display: none; }
+  .topbar-right { gap: 8px; }
+  .intro-row { padding: 40px 0 28px; align-items: flex-start; }
+  .intro-stat { display: none; }
+  .station-configs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-footer, .section-heading, .public-header { align-items: flex-start; flex-direction: column; }
+  .action-row { width: 100%; flex-wrap: wrap; }
+  .action-row .button { flex: 1; }
+  .device-grid, .public-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .device-screen { min-height: 160px; padding: 12px; }
+  .public-grid .device-screen { min-height: 180px; }
+  .device-title { font-size: 24px; }
+  .device-copy { font-size: 8px; }
+  .public-bottom { gap: 15px; line-height: 1.5; }
+}
+@media (max-width: 440px) {
+  .station-configs { grid-template-columns: 1fr; }
+  .device-grid, .public-grid { grid-template-columns: 1fr; }
+  .device-screen, .public-grid .device-screen { min-height: 205px; }
+  .button { padding: 0 13px; }
+  .action-row { flex-direction: column; }
+}
+
+@media (max-width: 760px) { .vision-panel { padding: 18px; } .vision-controls { align-items: stretch; flex-direction: column; } .vision-actions { width: 100%; } .vision-actions .button { flex: 1; } .vision-feedback { align-items: flex-start; } .camera-preview { width: 88px; } }
