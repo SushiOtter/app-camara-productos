@@ -9,8 +9,8 @@
   --line: rgba(57, 44, 34, .13);
   --white: #fffdf9;
   --success: #6f896d;
-  --serif: "Cormorant Garamond", Georgia, serif;
-  --sans: "Inter", "Segoe UI", Arial, sans-serif;
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: "Segoe UI", Arial, sans-serif;
   --radius-lg: 22px;
   --shadow-soft: 0 20px 60px rgba(43, 31, 22, .08);
 }

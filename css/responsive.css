@@ -30,4 +30,4 @@
   .action-row { flex-direction: column; }
 }
 
-@media (max-width: 760px) { .vision-panel { padding: 18px; } .vision-controls { align-items: stretch; flex-direction: column; } .vision-actions { width: 100%; } .vision-actions .button { flex: 1; } .vision-feedback { align-items: flex-start; } .camera-preview { width: 88px; } }
+@media (max-width: 760px) { .vision-panel { padding: 18px; } .vision-controls { align-items: stretch; flex-direction: column; } .vision-actions { width: 100%; } .vision-actions .button { flex: 1; } .vision-feedback { align-items: flex-start; } .camera-stage { width: min(100%, 320px); min-width: 0; flex: 0 0 auto; } }

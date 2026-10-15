@@ -74,3 +74,8 @@ h2 { font: 400 29px/1.1 var(--serif); letter-spacing: -.02em; margin: 0; }
 .vision-status-dot { position: absolute; left: 0; top: 5px; width: 7px; height: 7px; border-radius: 50%; background: #b3a99e; }
 .vision-status-dot.is-active { background: #668a61; box-shadow: 0 0 0 4px rgba(102,138,97,.12); }
 button:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Aviso de arranque cuando se abre index.html como archivo local. */
+.boot-warning { position: relative; z-index: 20; margin: 16px auto; max-width: 900px; padding: 16px 20px; border: 1px solid #b67b4c; border-radius: 12px; background: #fff3e8; color: #3a2a20; font: 14px/1.5 var(--sans); }
+.boot-warning strong, .boot-warning span { display: block; }
+.boot-warning span { margin-top: 4px; }

@@ -18,6 +18,10 @@
   <div class="ambient ambient-one" aria-hidden="true"></div>
   <div class="ambient ambient-two" aria-hidden="true"></div>
   <div class="grain" aria-hidden="true"></div>
+  <div id="boot-warning" class="boot-warning" role="alert" hidden>
+    <strong>La demo necesita un servidor local.</strong>
+    <span>No abras este archivo con doble clic. Ejecuta <code>INICIAR-DEMO.bat</code> y abre la dirección que aparezca.</span>
+  </div>
   <main class="app-shell">
     <header class="topbar">
       <a class="brand" href="#" aria-label="Beauty Tech, inicio">
@@ -101,9 +105,10 @@
     </section>
   </main>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <!-- Dependencias de visión artificial: se cargan desde CDN y necesitan conexión a internet. -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js" crossorigin="anonymous"></script>
+  <!-- La IA se descarga solo al activar la cámara; el resto de la web funciona sin esos CDN. -->
+  <script>
+    if (location.protocol === "file:") document.getElementById("boot-warning").hidden = false;
+  </script>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>

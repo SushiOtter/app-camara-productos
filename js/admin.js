@@ -46,6 +46,9 @@ export function initializeAdmin() {
  });
 }
 export function setPublicMode(enabled) {
+ // Cancela temporizadores de sesiones anteriores al cambiar de modo.
+ clearTimeout(appState.sessionTimer);
+ appState.sessionTimer = null;
  appState.mode = enabled ? "public" : "admin";
  $("#admin-view").hidden = enabled;
  $("#public-view").hidden = !enabled;
