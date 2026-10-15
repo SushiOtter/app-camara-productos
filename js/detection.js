@@ -4,10 +4,11 @@ export const detectionCapabilities = Object.freeze({
   motionDetection: false,
   personDetectionAI: true,
   personModel: "COCO-SSD / TensorFlow.js (clase person)",
-  proximity: "estimación aproximada por tamaño de la detección",
+  fallbackPresenceModel: "BlazeFace (rostro; no identidad)",
+  proximity: "estimación aproximada por tamaño de detección",
   orientation: false,
   gaze: false,
-  attentionInference: "solo presencia sostenida; no equivale a atención real",
+  attentionInference: "presencia sostenida en una zona; no equivale a atención real",
   ageEstimation: false,
-  stationSelection: "manual por el empleado en este prototipo"
+  stationSelection: "asignación manual de zonas por el empleado"
 });

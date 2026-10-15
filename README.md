@@ -63,3 +63,11 @@ No abras `index.html` con doble clic: los módulos JavaScript y el JSON necesita
 - `js/camera.js`, `js/detection.js`: cámara y detección experimental.
 - `data/contenido.json`: contenido y parámetros operativos.
 - `iniciar_demo.py`, `INICIAR-DEMO.bat`: arranque local en Windows.
+
+### Si la IA dice que no detecta a nadie
+
+- Asegúrate de que la vista previa muestra tu imagen en directo y no está negra/congelada.
+- Ponte frente a la cámara con buena iluminación; al principio prueba mostrando cabeza y torso, no solo la cara ni una silueta muy pequeña.
+- Esta versión usa COCO-SSD para detectar cuerpos y BlazeFace como alternativa cuando solo se ve un rostro. La detección de rostro significa presencia aproximada, no identidad.
+- Si indica que no puede descargar un modelo, comprueba conexión a internet y que la red no bloquee `cdn.jsdelivr.net`; pulsa Detener cámara y vuelve a activarla.
+- Si la cámara se ve pero no detecta nada, prueba Chrome o Edge actualizados y cierra aplicaciones que puedan estar usando la cámara.

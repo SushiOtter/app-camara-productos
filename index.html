@@ -64,7 +64,7 @@
           <div><p class="eyebrow">DETECCIÓN LOCAL EXPERIMENTAL</p><h2 id="vision-title">Prueba con cámara</h2></div>
           <span class="subtle-label">Procesamiento en este navegador</span>
         </div>
-        <p class="vision-copy">La cámara detecta personas y estima en qué zona de la imagen se encuentran. Asigna una estación a cada zona para probar la activación automática. <strong>Esto relaciona posición en cámara con una estación, pero no detecta la mirada ni confirma interés real.</strong></p>
+        <p class="vision-copy">La IA intenta detectar el cuerpo y, si no aparece completo en cámara, utiliza una detección complementaria de rostro para estimar presencia y zona. Asigna una estación a cada zona. <strong>No identifica personas, no detecta la mirada ni confirma interés real.</strong></p>
         <div class="zone-config" id="zone-config" aria-label="Asignación de zonas a estaciones">
           <p class="zone-config-title">Asigna cada zona de la cámara a una estación</p>
           <div class="zone-selects" id="zone-selects"></div>
@@ -81,7 +81,7 @@
             <video id="camera-preview" class="camera-preview" muted playsinline aria-label="Vista previa de la cámara"></video>
             <canvas id="camera-overlay" class="camera-overlay" aria-hidden="true"></canvas>
           </div>
-          <div class="vision-status-wrap"><span class="vision-status-dot" id="camera-status-dot"></span><p id="camera-status" role="status" aria-live="polite">Cámara apagada. Puedes usar la simulación guiada si no quieres conceder acceso.</p><small id="camera-detail">El modelo se descarga al iniciar la primera vez y necesita conexión a internet. El análisis se realiza en este navegador; no se guardan ni se envían imágenes.</small></div>
+          <div class="vision-status-wrap"><span class="vision-status-dot" id="camera-status-dot"></span><p id="camera-status" role="status" aria-live="polite">Cámara apagada. Puedes usar la simulación guiada si no quieres conceder acceso.</p><small id="camera-detail">Los modelos se descargan al activar la cámara y necesitan conexión a internet. Si no detecta, encuadra cabeza y torso, mejora la luz y acércate. El análisis se realiza en este navegador; no se guardan ni se envían imágenes.</small></div>
         </div>
       </section>
 
