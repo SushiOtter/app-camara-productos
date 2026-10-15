@@ -60,18 +60,23 @@
           <div><p class="eyebrow">DETECCIÓN LOCAL EXPERIMENTAL</p><h2 id="vision-title">Prueba con cámara</h2></div>
           <span class="subtle-label">Procesamiento en este navegador</span>
         </div>
-        <p class="vision-copy">Actívala como empleado para probar detección de personas mediante un modelo de visión artificial que se ejecuta en el navegador. Cuando detecta una persona de forma sostenida, puede activar la estación elegida en modo público. <strong>No detecta la mirada ni sabe automáticamente qué tablet está mirando.</strong></p>
+        <p class="vision-copy">La cámara detecta personas y estima en qué zona de la imagen se encuentran. Asigna una estación a cada zona para probar la activación automática. <strong>Esto relaciona posición en cámara con una estación, pero no detecta la mirada ni confirma interés real.</strong></p>
+        <div class="zone-config" id="zone-config" aria-label="Asignación de zonas a estaciones">
+          <p class="zone-config-title">Asigna cada zona de la cámara a una estación</p>
+          <div class="zone-selects" id="zone-selects"></div>
+          <small>Importante: coloca la cámara de forma que las estaciones se vean de izquierda a derecha. La imagen de vista previa está espejada, como un espejo.</small>
+        </div>
         <div class="vision-controls">
-          <label class="vision-target" for="camera-target">Estación que se activará
-            <select id="camera-target" class="field-select"></select>
-          </label>
           <div class="vision-actions">
             <button class="button button-secondary" id="camera-start" type="button">Activar cámara</button>
             <button class="button button-quiet" id="camera-stop" type="button" disabled>Detener cámara</button>
           </div>
         </div>
         <div class="vision-feedback">
-          <video id="camera-preview" class="camera-preview" muted playsinline aria-label="Vista previa de la cámara"></video>
+          <div class="camera-stage">
+            <video id="camera-preview" class="camera-preview" muted playsinline aria-label="Vista previa de la cámara"></video>
+            <canvas id="camera-overlay" class="camera-overlay" aria-hidden="true"></canvas>
+          </div>
           <div class="vision-status-wrap"><span class="vision-status-dot" id="camera-status-dot"></span><p id="camera-status" role="status" aria-live="polite">Cámara apagada. Puedes usar la simulación guiada si no quieres conceder acceso.</p><small id="camera-detail">El modelo se descarga al iniciar la primera vez y necesita conexión a internet. El análisis se realiza en este navegador; no se guardan ni se envían imágenes.</small></div>
         </div>
       </section>

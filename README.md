@@ -40,16 +40,16 @@ No abras `index.html` con doble clic: los módulos JavaScript y el JSON necesita
 - Motor de eventos normalizado mediante `beautytech:event`.
 - Estados por estación: `idle`, `attention`, `playing`, `cooldown` y `disabled`.
 - Activación simulada, límite de recomendaciones simultáneas, tiempo de espera y reinicio automático de la recomendación.
-- Detección de personas mediante COCO-SSD y TensorFlow.js en el navegador. El modelo detecta la clase genérica “person”; una presencia suficientemente sostenida puede activar la estación elegida por el empleado. El análisis se ejecuta en el navegador y el código no guarda ni envía fotogramas.
+- Detección de personas mediante COCO-SSD y TensorFlow.js en el navegador. El modelo detecta la clase genérica “person”; una presencia suficientemente sostenida puede activar la estación asignada a la zona detectada. El análisis se ejecuta en el navegador y el código no guarda ni envía fotogramas.
 - La cámara se activa solo cuando el empleado pulsa el botón y concede permiso. El procesamiento se hace en el navegador; las imágenes no se guardan ni se envían.
 - Adaptación responsive y preferencia de movimiento reducido.
 
 ## Qué está simulado o pendiente
 
 - La IA detecta personas, pero no identidad, orientación corporal, mirada ni interés real. La proximidad se estima de forma muy aproximada según el tamaño de la detección en la imagen.
-- La selección de la estación de destino la realiza el empleado; el prototipo no infiere qué tablet está mirando el visitante. La presencia sostenida es solo una señal básica, no una confirmación de atención.
+- El empleado asigna cinco zonas horizontales de la imagen a estaciones. El detector dibuja la caja de la persona y las divisiones de zona sobre la vista previa. Si la persona permanece en una zona durante un tiempo mínimo, se puede activar la estación asignada a esa zona. Es una aproximación espacial para la demo: no infiere qué tablet mira el visitante ni confirma interés real. La cámara debe colocarse de modo que las estaciones aparezcan de izquierda a derecha en la imagen.
 - No se incluyen vídeos MP4 ni imágenes de producto reales; se utilizan escenarios vectoriales CSS de ejemplo.
-- La reproducción de vídeos locales está prevista en la configuración, pero la integración completa del reproductor debe realizarse en una siguiente fase.
+- La reproducción de vídeos locales está prevista en los datos, pero la integración completa del reproductor debe realizarse en una siguiente fase.
 - La estimación de edad y los modelos de detección no están instalados ni habilitados.
 - La comunicación entre tablets físicas, backend, modo kiosco y analítica no forman parte de esta demo.
 - Las tipografías WOFF2 no se incluyen; añade versiones con licencia en `assets/fonts/` para que se utilicen localmente. Si no, hay fuentes alternativas.

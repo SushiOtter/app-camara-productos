@@ -1,8 +1,7 @@
 /*
- * Detección de personas con COCO-SSD (TensorFlow.js) ejecutado en el navegador.
- * Limitaciones: detecta la clase "person", no identidad, mirada ni interés real.
- * El empleado selecciona la estación de prueba; no se infiere qué tablet mira.
- * Los fotogramas no se guardan ni se envían a un servidor desde este código.
+ * Detección local de personas con COCO-SSD / TensorFlow.js.
+ * La zona se estima por la posición horizontal del cuerpo en la imagen.
+ * No detecta mirada, identidad ni interés real. No se guardan ni envían fotogramas.
  */
 import { appState } from "./state.js";
 import { emitEvent } from "./events.js";
@@ -10,6 +9,8 @@ import { $ } from "./utils.js";
 
 let stream = null;
 let video = null;
+let canvas = null;
+let context = null;
 let model = null;
 let rafId = 0;
 let inferenceBusy = false;
@@ -19,14 +20,15 @@ let lastTriggerAt = 0;
 let personPresent = false;
 let triggeredThisPresence = false;
 let lastAdminNoticeAt = 0;
-let targetId = "";
-let latestConfidence = 0;
+let latestZone = -1;
 let latestAreaRatio = 0;
+let zoneAssignments = [];
 const MIN_CONFIDENCE = 0.55;
 const MIN_PERSON_AREA = 0.035;
 const HOLD_MS = 1400;
 const TRIGGER_COOLDOWN_MS = 12000;
 const INFERENCE_INTERVAL_MS = 300;
+const ZONE_COUNT = 5;
 
 function status(message, active = false) {
   const label = $("#camera-status");
@@ -38,18 +40,31 @@ function status(message, active = false) {
 function setControls(active) {
   $("#camera-start").disabled = active;
   $("#camera-stop").disabled = !active;
-  $("#camera-target").disabled = active;
+}
+
+function buildZoneSelectors() {
+  const root = $("#zone-selects");
+  const stations = [...appState.stations.values()];
+  const options = stations.map(station => `<option value="${station.id}">${station.name}</option>`).join("");
+  root.innerHTML = Array.from({ length: ZONE_COUNT }, (_, index) => `
+    <label class="zone-select" for="camera-zone-${index}">
+      Zona ${index + 1}
+      <select id="camera-zone-${index}" class="field-select" data-zone="${index}">${options}<option value="">No activar</option></select>
+    </label>`).join("");
+  zoneAssignments = Array.from({ length: ZONE_COUNT }, (_, index) => stations[index]?.id || "");
+  root.querySelectorAll("select[data-zone]").forEach((select, index) => {
+    select.value = zoneAssignments[index];
+    select.addEventListener("change", () => { zoneAssignments[index] = select.value; });
+  });
 }
 
 export function initializeCameraControls() {
-  const select = $("#camera-target");
-  select.innerHTML = [...appState.stations.values()].map(station =>
-    `<option value="${station.id}">${station.name}</option>`
-  ).join("");
-  targetId = select.value;
-  select.addEventListener("change", () => { targetId = select.value; });
+  buildZoneSelectors();
   $("#camera-start").addEventListener("click", startCamera);
   $("#camera-stop").addEventListener("click", stopCamera);
+  video = $("#camera-preview");
+  canvas = $("#camera-overlay");
+  context = canvas.getContext("2d");
 }
 
 async function startCamera() {
@@ -70,17 +85,15 @@ async function startCamera() {
       video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
       audio: false
     });
-    video = $("#camera-preview");
     video.srcObject = stream;
     await video.play();
     personStartedAt = 0;
     personPresent = false;
     triggeredThisPresence = false;
-    latestConfidence = 0;
-    latestAreaRatio = 0;
     lastInferenceAt = 0;
+    lastTriggerAt = 0;
     setControls(true);
-    status("IA activa. Esperando que detecte una persona…", true);
+    status("IA activa. Busca una persona en la imagen…", true);
     rafId = requestAnimationFrame(scanFrame);
   } catch (error) {
     stopCamera(false);
@@ -88,6 +101,37 @@ async function startCamera() {
       ? "Permiso de cámara denegado. Puedes seguir usando la simulación guiada."
       : `No se pudo iniciar la detección: ${error?.message || "error desconocido"}`);
   }
+}
+
+function drawOverlay(person) {
+  if (!context || !video?.videoWidth || !video?.videoHeight) return;
+  const width = video.videoWidth;
+  const height = video.videoHeight;
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+  context.clearRect(0, 0, width, height);
+  context.save();
+  context.strokeStyle = "rgba(255,255,255,.75)";
+  context.lineWidth = Math.max(1.5, width / 320);
+  for (let i = 1; i < ZONE_COUNT; i++) {
+    const x = width * i / ZONE_COUNT;
+    context.beginPath();
+    context.moveTo(x, 0);
+    context.lineTo(x, height);
+    context.stroke();
+  }
+  if (person) {
+    const [x, y, boxWidth, boxHeight] = person.bbox;
+    context.strokeStyle = "#c8a977";
+    context.lineWidth = Math.max(3, width / 180);
+    context.strokeRect(x, y, boxWidth, boxHeight);
+    context.fillStyle = "rgba(200,169,119,.95)";
+    context.font = `bold ${Math.max(13, width / 28)}px sans-serif`;
+    context.fillText(`PERSONA ${Math.round(person.score * 100)}%`, Math.max(4, x), Math.max(18, y - 7));
+  }
+  context.restore();
 }
 
 function scanFrame(now) {
@@ -102,42 +146,51 @@ function scanFrame(now) {
       const people = predictions.filter(item => item.class === "person" && item.score >= MIN_CONFIDENCE);
       const best = people.sort((a, b) => b.score - a.score)[0];
       if (!best) {
+        drawOverlay(null);
         personPresent = false;
         personStartedAt = 0;
         triggeredThisPresence = false;
-        latestConfidence = 0;
-        latestAreaRatio = 0;
+        latestZone = -1;
         status("IA activa. No se detecta ninguna persona en la imagen.", true);
         return;
       }
-      const [x, y, width, height] = best.bbox;
-      latestConfidence = best.score;
-      latestAreaRatio = Math.max(0, Math.min(1, (width * height) / Math.max(1, video.videoWidth * video.videoHeight)));
-      if (latestAreaRatio < MIN_PERSON_AREA) {
+      drawOverlay(best);
+      const [x, , boxWidth, boxHeight] = best.bbox;
+      const areaRatio = Math.max(0, Math.min(1, (boxWidth * boxHeight) / Math.max(1, video.videoWidth * video.videoHeight)));
+      if (areaRatio < MIN_PERSON_AREA) {
         personPresent = false;
         personStartedAt = 0;
         triggeredThisPresence = false;
+        latestZone = -1;
         status(`Persona detectada (${Math.round(best.score * 100)}%), pero está lejos o ocupa poco espacio en la imagen.`, true);
         return;
       }
-      if (!personPresent) {
+      // La vista previa está espejada, así que invertimos X para que las zonas coincidan visualmente.
+      const mirroredCenterX = 1 - ((x + boxWidth / 2) / video.videoWidth);
+      const zone = Math.max(0, Math.min(ZONE_COUNT - 1, Math.floor(mirroredCenterX * ZONE_COUNT)));
+      if (!personPresent || zone !== latestZone) {
         personPresent = true;
         personStartedAt = performance.now();
         triggeredThisPresence = false;
       }
+      latestZone = zone;
+      latestAreaRatio = areaRatio;
       const dwellMs = performance.now() - personStartedAt;
-      status(`Persona detectada · confianza ${Math.round(best.score * 100)}% · presencia ${Math.max(1, Math.floor(dwellMs / 1000))} s.`, true);
-      if (dwellMs >= HOLD_MS && !triggeredThisPresence) onSustainedPerson({ confidence: best.score, areaRatio: latestAreaRatio, dwellMs });
+      const stationId = zoneAssignments[zone];
+      const station = stationId ? appState.stations.get(stationId) : null;
+      const zoneText = station ? `Zona ${zone + 1} → ${station.name}` : `Zona ${zone + 1} sin estación asignada`;
+      status(`Persona ${Math.round(best.score * 100)}% · ${zoneText} · ${Math.max(1, Math.floor(dwellMs / 1000))} s`, true);
+      if (dwellMs >= HOLD_MS && !triggeredThisPresence) onSustainedPerson({ confidence: best.score, areaRatio, dwellMs, zone, station });
     }).catch(error => {
       console.error("Error en el modelo de visión artificial:", error);
-      status("La detección de IA ha fallado. Puedes detener la cámara y usar la simulación.");
+      status("La detección de IA ha fallado. Detén la cámara y usa la simulación.");
     }).finally(() => { inferenceBusy = false; });
   }
   rafId = requestAnimationFrame(scanFrame);
 }
 
-function onSustainedPerson({ confidence, areaRatio, dwellMs }) {
-  if (performance.now() - lastTriggerAt < TRIGGER_COOLDOWN_MS) return;
+function onSustainedPerson({ confidence, areaRatio, dwellMs, zone, station }) {
+  if (lastTriggerAt > 0 && performance.now() - lastTriggerAt < TRIGGER_COOLDOWN_MS) return;
   if (appState.mode !== "public") {
     if (performance.now() - lastAdminNoticeAt > 4000) {
       status("Persona detectada. Inicia el modo público para probar la activación automática.", true);
@@ -145,22 +198,22 @@ function onSustainedPerson({ confidence, areaRatio, dwellMs }) {
     }
     return;
   }
-  const station = appState.stations.get(targetId);
   if (!station?.enabled) {
-    status("La IA detecta una persona, pero la estación seleccionada está desactivada.", true);
+    status(station ? `La estación ${station.name} está desactivada.` : `La zona ${zone + 1} no tiene estación asignada.`, true);
+    triggeredThisPresence = true;
     return;
   }
   lastTriggerAt = performance.now();
   emitEvent("entry");
-  emitEvent("attention", targetId, {
+  emitEvent("attention", station.id, {
     proximity: Math.min(0.95, 0.45 + areaRatio * 2.5),
     dwellMs,
     orientation: null,
     confidence,
-    source: "coco-ssd-person-detection"
+    zone: zone + 1,
+    source: "coco-ssd-person-zone-detection"
   });
-  status(`Persona detectada por IA. Activando ${station.name} (estación seleccionada para la prueba).`, true);
-  // Evita múltiples activaciones mientras la misma persona permanece en escena.
+  status(`Zona ${zone + 1} detectada por IA. Activando ${station.name}.`, true);
   triggeredThisPresence = true;
 }
 
@@ -170,10 +223,12 @@ export function stopCamera(updateStatus = true) {
   if (stream) stream.getTracks().forEach(track => track.stop());
   stream = null;
   if (video) video.srcObject = null;
+  if (context && canvas) context.clearRect(0, 0, canvas.width, canvas.height);
   inferenceBusy = false;
   personStartedAt = 0;
   personPresent = false;
   triggeredThisPresence = false;
+  latestZone = -1;
   setControls(false);
   if (updateStatus) status("Cámara apagada. No se está capturando imagen.");
 }
