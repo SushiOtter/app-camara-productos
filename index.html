@@ -60,7 +60,7 @@
           <div><p class="eyebrow">DETECCIÓN LOCAL EXPERIMENTAL</p><h2 id="vision-title">Prueba con cámara</h2></div>
           <span class="subtle-label">Procesamiento en este navegador</span>
         </div>
-        <p class="vision-copy">Actívala tú como empleado para probar la cámara. El prototipo detecta movimiento en la imagen y puede activar una estación elegida cuando el sistema esté en modo público. <strong>No identifica personas ni detecta la mirada.</strong></p>
+        <p class="vision-copy">Actívala como empleado para probar detección de personas mediante un modelo de visión artificial que se ejecuta en el navegador. Cuando detecta una persona de forma sostenida, puede activar la estación elegida en modo público. <strong>No detecta la mirada ni sabe automáticamente qué tablet está mirando.</strong></p>
         <div class="vision-controls">
           <label class="vision-target" for="camera-target">Estación que se activará
             <select id="camera-target" class="field-select"></select>
@@ -72,7 +72,7 @@
         </div>
         <div class="vision-feedback">
           <video id="camera-preview" class="camera-preview" muted playsinline aria-label="Vista previa de la cámara"></video>
-          <div class="vision-status-wrap"><span class="vision-status-dot" id="camera-status-dot"></span><p id="camera-status" role="status" aria-live="polite">Cámara apagada. Puedes usar la simulación guiada si no quieres conceder acceso.</p><small id="camera-detail">No se guardan ni se envían imágenes. La detección por movimiento puede confundirse con otros movimientos del entorno.</small></div>
+          <div class="vision-status-wrap"><span class="vision-status-dot" id="camera-status-dot"></span><p id="camera-status" role="status" aria-live="polite">Cámara apagada. Puedes usar la simulación guiada si no quieres conceder acceso.</p><small id="camera-detail">El modelo se descarga al iniciar la primera vez y necesita conexión a internet. El análisis se realiza en este navegador; no se guardan ni se envían imágenes.</small></div>
         </div>
       </section>
 
@@ -83,7 +83,7 @@
         </div>
         <div id="device-grid" class="device-grid"></div>
       </section>
-      <p class="footnote">PROTOTIPO · Cámara opcional · Detector de movimiento experimental · Sin reconocimiento de mirada ni IA de personas.</p>
+      <p class="footnote">PROTOTIPO · Detección de personas mediante IA en navegador · Sin reconocimiento de identidad ni detección de mirada.</p>
     </section>
 
     <section id="public-view" class="public-view" hidden aria-label="Modo público de las estaciones">
@@ -96,6 +96,9 @@
     </section>
   </main>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <!-- Dependencias de visión artificial: se cargan desde CDN y necesitan conexión a internet. -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js" crossorigin="anonymous"></script>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>

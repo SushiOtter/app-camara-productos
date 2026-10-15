@@ -7,7 +7,7 @@ Demo web local para presentar un concepto de recomendación automática en una t
 - Windows 10/11.
 - PHP instalado y disponible desde la terminal (`php -v`).
 - Navegador moderno (Chrome, Edge o Firefox).
-- No necesita Node.js, compilación ni servicios externos para el recorrido básico.
+- No necesita Node.js ni compilación. La detección IA requiere conexión a internet para cargar TensorFlow.js, COCO-SSD y sus pesos la primera vez.
 
 ## Ejecutar en Windows
 
@@ -21,7 +21,7 @@ Demo web local para presentar un concepto de recomendación automática en una t
 
 4. Abre `http://localhost:8000`.
 
-No abras `index.html` con doble clic: los módulos JavaScript y el JSON necesitan servirse mediante HTTP. `localhost` es un contexto seguro para futuras funciones de cámara, aunque esta demo no activa cámara alguna.
+No abras `index.html` con doble clic: los módulos JavaScript y el JSON necesitan servirse mediante HTTP. `localhost` permite solicitar permiso de cámara.
 
 ## Cómo hacer la demostración
 
@@ -40,20 +40,20 @@ No abras `index.html` con doble clic: los módulos JavaScript y el JSON necesita
 - Motor de eventos normalizado mediante `beautytech:event`.
 - Estados por estación: `idle`, `attention`, `playing`, `cooldown` y `disabled`.
 - Activación simulada, límite de recomendaciones simultáneas, tiempo de espera y reinicio automático de la recomendación.
-- Detector visual local experimental: permite abrir la cámara y detectar movimiento mediante comparación de fotogramas en el navegador. El empleado elige la estación de destino. No usa un modelo de IA, no identifica personas y no detecta mirada ni atención; sirve como primer test real de cámara y eventos.
+- Detección de personas mediante COCO-SSD y TensorFlow.js en el navegador. El modelo detecta la clase genérica “person”; una presencia suficientemente sostenida puede activar la estación elegida por el empleado. El análisis se ejecuta en el navegador y el código no guarda ni envía fotogramas.
 - La cámara se activa solo cuando el empleado pulsa el botón y concede permiso. El procesamiento se hace en el navegador; las imágenes no se guardan ni se envían.
 - Adaptación responsive y preferencia de movimiento reducido.
 
 ## Qué está simulado o pendiente
 
-- No hay detección mediante IA de personas, proximidad, orientación, mirada o atención. La cámara experimental detecta movimiento visual, que puede deberse a una persona u otros cambios en la escena.
-- La selección de la estación de destino en el detector visual la realiza el empleado; no se infiere automáticamente qué tablet está mirando el visitante. Los eventos de interés también se pueden simular desde administración.
+- La IA detecta personas, pero no identidad, orientación corporal, mirada ni interés real. La proximidad se estima de forma muy aproximada según el tamaño de la detección en la imagen.
+- La selección de la estación de destino la realiza el empleado; el prototipo no infiere qué tablet está mirando el visitante. La presencia sostenida es solo una señal básica, no una confirmación de atención.
 - No se incluyen vídeos MP4 ni imágenes de producto reales; se utilizan escenarios vectoriales CSS de ejemplo.
 - La reproducción de vídeos locales está prevista en la configuración, pero la integración completa del reproductor debe realizarse en una siguiente fase.
 - La estimación de edad y los modelos de detección no están instalados ni habilitados.
 - La comunicación entre tablets físicas, backend, modo kiosco y analítica no forman parte de esta demo.
 - Las tipografías WOFF2 no se incluyen; añade versiones con licencia en `assets/fonts/` para que se utilicen localmente. Si no, hay fuentes alternativas.
-- La cámara permanece deshabilitada hasta que el empleado la activa. Para una instalación pública real hay que evaluar información, base jurídica, autorización cuando corresponda, RGPD y otras obligaciones con el responsable de privacidad/asesoría legal.
+- La cámara permanece deshabilitada hasta que el empleado la activa. La detección IA requiere conexión a internet para descargar bibliotecas y pesos del modelo. Para una instalación pública real hay que evaluar información, base jurídica, autorización cuando corresponda, RGPD y otras obligaciones con el responsable de privacidad/asesoría legal.
 
 ## Arquitectura
 
@@ -65,14 +65,14 @@ No abras `index.html` con doble clic: los módulos JavaScript y el JSON necesita
 - `js/events.js`: motor de eventos y ciclo de recomendación.
 - `js/panels.js`: renderizado de las seis pantallas.
 - `js/admin.js`: controles de administración y cambio de modo.
-- `js/camera.js`, `js/detection.js`: puntos de extensión deshabilitados.
+- `js/camera.js`, `js/detection.js`: acceso a cámara y detector de personas con IA.
 - `data/contenido.json`: contenido comercial y parámetros operativos.
 
 ## Pruebas realizadas / pendientes
 
-- Estructura de archivos generada y referencias internas revisadas durante la creación.
-- Pendiente de ejecutar pruebas reales en navegador, revisar consola, accesibilidad con lector de pantalla y validar resoluciones 1280×800 y 800×1280 en dispositivos concretos.
-- No se han realizado pruebas con hardware, cámara ni tablets físicas.
+- Sintaxis JavaScript revisada con Node.js.
+- Pendiente de validar en tu navegador que las dependencias CDN cargan correctamente y que el modelo detecta personas con tu cámara.
+- No se han realizado pruebas con tablets físicas ni con varias cámaras.
 
 ## Inicio rápido
 

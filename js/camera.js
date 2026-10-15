@@ -1,8 +1,8 @@
 /*
- * Detector visual local de movimiento para la primera demo.
- * Importante: no es un modelo de IA ni reconoce personas o miradas. Compara
- * fotogramas en el navegador; sirve como prueba de integración con cámara.
- * No se almacenan ni se envían imágenes.
+ * Detección de personas con COCO-SSD (TensorFlow.js) ejecutado en el navegador.
+ * Limitaciones: detecta la clase "person", no identidad, mirada ni interés real.
+ * El empleado selecciona la estación de prueba; no se infiere qué tablet mira.
+ * Los fotogramas no se guardan ni se envían a un servidor desde este código.
  */
 import { appState } from "./state.js";
 import { emitEvent } from "./events.js";
@@ -10,19 +10,23 @@ import { $ } from "./utils.js";
 
 let stream = null;
 let video = null;
-let canvas = null;
-let context = null;
+let model = null;
 let rafId = 0;
-let previous = null;
-let motionStartedAt = 0;
+let inferenceBusy = false;
+let lastInferenceAt = 0;
+let personStartedAt = 0;
 let lastTriggerAt = 0;
-let motionActive = false;
+let personPresent = false;
+let triggeredThisPresence = false;
+let lastAdminNoticeAt = 0;
 let targetId = "";
-const WIDTH = 112;
-const HEIGHT = 84;
-const MOTION_THRESHOLD = 0.055;
-const HOLD_MS = 1200;
+let latestConfidence = 0;
+let latestAreaRatio = 0;
+const MIN_CONFIDENCE = 0.55;
+const MIN_PERSON_AREA = 0.035;
+const HOLD_MS = 1400;
 const TRIGGER_COOLDOWN_MS = 12000;
+const INFERENCE_INTERVAL_MS = 300;
 
 function status(message, active = false) {
   const label = $("#camera-status");
@@ -53,27 +57,36 @@ async function startCamera() {
     status("Este navegador no permite acceder a la cámara. Usa localhost y un navegador actualizado.");
     return;
   }
+  if (!window.tf || !window.cocoSsd) {
+    status("No se ha podido cargar la biblioteca de IA. Comprueba la conexión a internet y recarga la página.");
+    return;
+  }
   try {
-    status("Solicitando permiso para usar la cámara…");
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+    status("Cargando el modelo de detección de personas…");
+    await window.tf.ready();
+    model = model || await window.cocoSsd.load({ base: "lite_mobilenet_v2" });
+    status("Modelo de IA listo. Solicitando permiso para la cámara…");
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+      audio: false
+    });
     video = $("#camera-preview");
     video.srcObject = stream;
     await video.play();
-    canvas = document.createElement("canvas");
-    canvas.width = WIDTH;
-    canvas.height = HEIGHT;
-    context = canvas.getContext("2d", { willReadFrequently: true });
-    previous = null;
-    motionStartedAt = 0;
-    motionActive = false;
+    personStartedAt = 0;
+    personPresent = false;
+    triggeredThisPresence = false;
+    latestConfidence = 0;
+    latestAreaRatio = 0;
+    lastInferenceAt = 0;
     setControls(true);
-    status("Cámara activa. Esperando movimiento sostenido…", true);
+    status("IA activa. Esperando que detecte una persona…", true);
     rafId = requestAnimationFrame(scanFrame);
   } catch (error) {
     stopCamera(false);
     status(error?.name === "NotAllowedError"
-      ? "Permiso denegado. Puedes seguir usando la simulación guiada."
-      : `No se pudo iniciar la cámara: ${error?.message || "error desconocido"}`);
+      ? "Permiso de cámara denegado. Puedes seguir usando la simulación guiada."
+      : `No se pudo iniciar la detección: ${error?.message || "error desconocido"}`);
   }
 }
 
@@ -82,55 +95,73 @@ function scanFrame(now) {
     rafId = requestAnimationFrame(scanFrame);
     return;
   }
-  context.drawImage(video, 0, 0, WIDTH, HEIGHT);
-  const pixels = context.getImageData(0, 0, WIDTH, HEIGHT).data;
-  if (previous) {
-    let changed = 0;
-    // Comparación luminosa de baja resolución para mantener el procesamiento ligero.
-    for (let i = 0; i < pixels.length; i += 16) {
-      const currentLuma = pixels[i] * 0.299 + pixels[i + 1] * 0.587 + pixels[i + 2] * 0.114;
-      const oldLuma = previous[i] * 0.299 + previous[i + 1] * 0.587 + previous[i + 2] * 0.114;
-      if (Math.abs(currentLuma - oldLuma) > 28) changed++;
-    }
-    const ratio = changed / (pixels.length / 16);
-    if (ratio >= MOTION_THRESHOLD) {
-      if (!motionStartedAt) motionStartedAt = now;
-      if (!motionActive && now - motionStartedAt >= HOLD_MS) {
-        motionActive = true;
-        onSustainedMotion(ratio, now);
+  if (!inferenceBusy && now - lastInferenceAt >= INFERENCE_INTERVAL_MS) {
+    inferenceBusy = true;
+    lastInferenceAt = now;
+    model.detect(video).then(predictions => {
+      const people = predictions.filter(item => item.class === "person" && item.score >= MIN_CONFIDENCE);
+      const best = people.sort((a, b) => b.score - a.score)[0];
+      if (!best) {
+        personPresent = false;
+        personStartedAt = 0;
+        triggeredThisPresence = false;
+        latestConfidence = 0;
+        latestAreaRatio = 0;
+        status("IA activa. No se detecta ninguna persona en la imagen.", true);
+        return;
       }
-    } else {
-      motionStartedAt = 0;
-      motionActive = false;
-    }
+      const [x, y, width, height] = best.bbox;
+      latestConfidence = best.score;
+      latestAreaRatio = Math.max(0, Math.min(1, (width * height) / Math.max(1, video.videoWidth * video.videoHeight)));
+      if (latestAreaRatio < MIN_PERSON_AREA) {
+        personPresent = false;
+        personStartedAt = 0;
+        triggeredThisPresence = false;
+        status(`Persona detectada (${Math.round(best.score * 100)}%), pero está lejos o ocupa poco espacio en la imagen.`, true);
+        return;
+      }
+      if (!personPresent) {
+        personPresent = true;
+        personStartedAt = performance.now();
+        triggeredThisPresence = false;
+      }
+      const dwellMs = performance.now() - personStartedAt;
+      status(`Persona detectada · confianza ${Math.round(best.score * 100)}% · presencia ${Math.max(1, Math.floor(dwellMs / 1000))} s.`, true);
+      if (dwellMs >= HOLD_MS && !triggeredThisPresence) onSustainedPerson({ confidence: best.score, areaRatio: latestAreaRatio, dwellMs });
+    }).catch(error => {
+      console.error("Error en el modelo de visión artificial:", error);
+      status("La detección de IA ha fallado. Puedes detener la cámara y usar la simulación.");
+    }).finally(() => { inferenceBusy = false; });
   }
-  previous = new Uint8ClampedArray(pixels);
   rafId = requestAnimationFrame(scanFrame);
 }
 
-function onSustainedMotion(ratio, now) {
-  if (now - lastTriggerAt < TRIGGER_COOLDOWN_MS) {
-    status("Movimiento detectado, pero la estación está en periodo de espera.", true);
-    return;
-  }
+function onSustainedPerson({ confidence, areaRatio, dwellMs }) {
+  if (performance.now() - lastTriggerAt < TRIGGER_COOLDOWN_MS) return;
   if (appState.mode !== "public") {
-    status("Movimiento detectado. Inicia el modo público para probar la activación automática.", true);
+    if (performance.now() - lastAdminNoticeAt > 4000) {
+      status("Persona detectada. Inicia el modo público para probar la activación automática.", true);
+      lastAdminNoticeAt = performance.now();
+    }
     return;
   }
   const station = appState.stations.get(targetId);
   if (!station?.enabled) {
-    status("Hay movimiento, pero la estación seleccionada está desactivada.", true);
+    status("La IA detecta una persona, pero la estación seleccionada está desactivada.", true);
     return;
   }
-  lastTriggerAt = now;
+  lastTriggerAt = performance.now();
   emitEvent("entry");
   emitEvent("attention", targetId, {
-    proximity: Math.min(0.95, 0.55 + ratio * 2),
-    dwellMs: HOLD_MS,
+    proximity: Math.min(0.95, 0.45 + areaRatio * 2.5),
+    dwellMs,
     orientation: null,
-    source: "local-motion-detector"
+    confidence,
+    source: "coco-ssd-person-detection"
   });
-  status(`Movimiento sostenido detectado: activando ${station.name}.`, true);
+  status(`Persona detectada por IA. Activando ${station.name} (estación seleccionada para la prueba).`, true);
+  // Evita múltiples activaciones mientras la misma persona permanece en escena.
+  triggeredThisPresence = true;
 }
 
 export function stopCamera(updateStatus = true) {
@@ -139,9 +170,10 @@ export function stopCamera(updateStatus = true) {
   if (stream) stream.getTracks().forEach(track => track.stop());
   stream = null;
   if (video) video.srcObject = null;
-  previous = null;
-  motionStartedAt = 0;
-  motionActive = false;
+  inferenceBusy = false;
+  personStartedAt = 0;
+  personPresent = false;
+  triggeredThisPresence = false;
   setControls(false);
   if (updateStatus) status("Cámara apagada. No se está capturando imagen.");
 }

@@ -1,11 +1,13 @@
-/* Capacidades verificadas de la demo. Movimiento no equivale a detección de persona o atención. */
+/* Capacidades reales del prototipo actual. */
 export const detectionCapabilities = Object.freeze({
   cameraAccess: true,
-  motionDetection: true,
-  personDetectionAI: false,
-  proximity: false,
+  motionDetection: false,
+  personDetectionAI: true,
+  personModel: "COCO-SSD / TensorFlow.js (clase person)",
+  proximity: "estimación aproximada por tamaño de la detección",
   orientation: false,
   gaze: false,
-  attentionInference: false,
-  ageEstimation: false
+  attentionInference: "solo presencia sostenida; no equivale a atención real",
+  ageEstimation: false,
+  stationSelection: "manual por el empleado en este prototipo"
 });
