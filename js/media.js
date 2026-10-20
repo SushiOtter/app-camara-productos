@@ -1,5 +1,5 @@
 import { appState } from "./state.js";
-import { $ } from "./utils.js";
+import { $, escapeHTML } from "./utils.js";
 import { renderDevices } from "./panels.js";
 
 const objectUrls = new Set();
@@ -20,8 +20,10 @@ function updateMediaLabels() {
 function setVideo(slot, file) {
   const station = currentStation();
   if (!station || !file) return;
-  if (!file.type.startsWith("video/")) {
-    $("#media-status").textContent = "Selecciona un archivo de vídeo válido (MP4, WebM u otro formato compatible con el navegador).";
+  const supportedType = ["video/mp4", "video/webm", "video/ogg"].includes(file.type);
+  const supportedExtension = /\.(mp4|webm|ogv|ogg)$/i.test(file.name);
+  if (!supportedType && !(file.type === "" && supportedExtension)) {
+    $("#media-status").textContent = "Formato no admitido. Selecciona un archivo MP4, WebM u Ogg.";
     return;
   }
   station.mediaFiles ||= [null, null];
@@ -41,7 +43,7 @@ function setVideo(slot, file) {
 export function initializeMediaControls() {
   const select = $("#media-station");
   if (!select) return;
-  select.innerHTML = [...appState.stations.values()].map(station => `<option value="${station.id}">${station.name}</option>`).join("");
+  select.innerHTML = [...appState.stations.values()].map(station => `<option value="${station.id}">${escapeHTML(station.name)}</option>`).join("");
   selectedStationId = select.value;
   updateMediaLabels();
   select.addEventListener("change", () => {

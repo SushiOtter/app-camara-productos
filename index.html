@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1b1816">
   <title>Beauty Tech — Experiencia de retail inteligente</title>
-  <link rel="stylesheet" href="css/tokens.css">
-  <link rel="stylesheet" href="css/fonts.css">
-  <link rel="stylesheet" href="css/main.css">
-  <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/animations.css">
-  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="icon" href="assets/icons/beauty-tech.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/tokens.css?v=10">
+  <link rel="stylesheet" href="css/fonts.css?v=10">
+  <link rel="stylesheet" href="css/main.css?v=10">
+  <link rel="stylesheet" href="css/layout.css?v=10">
+  <link rel="stylesheet" href="css/components.css?v=10">
+  <link rel="stylesheet" href="css/animations.css?v=10">
+  <link rel="stylesheet" href="css/responsive.css?v=10">
   <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
@@ -47,13 +48,15 @@
       <section class="control-panel" aria-labelledby="setup-title">
         <div class="section-heading">
           <div><p class="eyebrow">CONFIGURACIÓN DE JORNADA</p><h2 id="setup-title">Estaciones de recomendación</h2></div>
-          <span class="subtle-label">5 estaciones + 1 sensor</span>
+          <div class="config-actions"><span class="subtle-label" id="save-status" role="status">Cinco estaciones</span><button class="button button-quiet" id="restore-defaults" type="button">Restaurar valores iniciales</button></div>
         </div>
         <div id="station-configs" class="station-configs"></div>
         <div class="admin-footer">
-          <div class="config-note"><span class="note-icon">✦</span><span><strong>Todo listo para empezar</strong><small>Los eventos de atención se simulan en esta demo.</small></span></div>
+          <div class="config-note"><span class="note-icon">✦</span><span><strong>Configuración local</strong><small>Los cambios se guardan en este navegador. Los vídeos solo duran esta sesión.</small></span></div>
           <div class="action-row">
             <button class="button button-secondary" id="test-event" type="button">Probar recomendación</button>
+            <label class="guided-interval" for="guided-interval">Segundos por estación<input id="guided-interval" type="number" min="12" max="45" step="0.5" value="14.5"></label>
+            <button class="button button-secondary" id="guided-demo" type="button">Iniciar demostración guiada</button>
             <button class="button button-primary" id="start-public" type="button">Iniciar modo público <span aria-hidden="true">→</span></button>
           </div>
         </div>
@@ -64,7 +67,7 @@
           <div><p class="eyebrow">DETECCIÓN LOCAL EXPERIMENTAL</p><h2 id="vision-title">Prueba con cámara</h2></div>
           <span class="subtle-label">Procesamiento en este navegador</span>
         </div>
-        <p class="vision-copy">La IA intenta detectar el cuerpo y, si no aparece completo en cámara, utiliza una detección complementaria de rostro para estimar presencia y zona. Asigna una estación a cada zona. <strong>No identifica personas, no detecta la mirada ni confirma interés real.</strong></p>
+        <p class="vision-copy">La IA detecta rostro o cuerpo para estimar presencia y zona. Asigna una estación a cada zona. <strong>No identifica personas, no detecta la mirada ni confirma interés real.</strong></p>
         <div class="zone-config" id="zone-config" aria-label="Asignación de zonas a estaciones">
           <p class="zone-config-title">Asigna cada zona de la cámara a una estación</p>
           <div class="zone-selects" id="zone-selects"></div>
@@ -75,13 +78,14 @@
             <button class="button button-secondary" id="camera-start" type="button">Activar cámara</button>
             <button class="button button-quiet" id="camera-stop" type="button" disabled>Detener cámara</button>
           </div>
+          <label class="confidence-control" for="camera-confidence">Confianza mínima <output id="camera-confidence-value" for="camera-confidence">20%</output><input id="camera-confidence" type="range" min="0.2" max="0.9" step="0.05" value="0.2"></label>
         </div>
         <div class="vision-feedback">
           <div class="camera-stage">
             <video id="camera-preview" class="camera-preview" muted playsinline aria-label="Vista previa de la cámara"></video>
             <canvas id="camera-overlay" class="camera-overlay" aria-hidden="true"></canvas>
           </div>
-          <div class="vision-status-wrap"><span class="vision-status-dot" id="camera-status-dot"></span><p id="camera-status" role="status" aria-live="polite">Cámara apagada. Puedes usar la simulación guiada si no quieres conceder acceso.</p><small id="camera-detail">La detección está ajustada a sensibilidad alta y confirma presencia tras 0,85 s. Los modelos se descargan al activar la cámara y necesitan internet. Evita contraluz y prueba a acercarte. El análisis se realiza en este navegador; no se guardan ni se envían imágenes.</small></div>
+          <div class="vision-status-wrap"><span class="vision-status-dot" id="camera-status-dot"></span><p id="camera-status" role="status" aria-live="polite">Cámara apagada. Puedes usar la simulación guiada si no quieres conceder acceso.</p><small id="camera-detail">La detección prioriza el rostro para responder rápido y usa la detección de persona como alternativa. Los modelos se descargan al activar la cámara y necesitan internet. El análisis se realiza en este navegador; no se guardan ni se envían imágenes.</small><div class="vision-metrics" aria-live="polite"><span>Modelo: <strong id="metric-model">Sin iniciar</strong></span><span>Confianza: <strong id="metric-confidence">—</strong></span><span>Inferencia: <strong id="metric-latency">—</strong></span><span>Zona: <strong id="metric-zone">—</strong></span><span>Última detección: <strong id="metric-last-detection">—</strong></span></div></div>
         </div>
       </section>
 
@@ -90,17 +94,17 @@
           <div><p class="eyebrow">CONTENIDO DE LAS ESTACIONES</p><h2 id="media-title">Vídeos de demostración</h2></div>
           <span class="subtle-label">Archivos locales · sin subir a internet</span>
         </div>
-        <p class="vision-copy">Elige una estación y carga hasta dos vídeos MP4/WebM. Cuando esa estación se active en modo público, se reproducirá el vídeo correspondiente al contenido recomendado. Los archivos se mantienen en memoria mientras esta pestaña esté abierta; al recargar, tendrás que seleccionarlos de nuevo.</p>
+        <p class="vision-copy">Elige una estación y carga hasta dos vídeos MP4, WebM u Ogg. Cuando se active, se reproducirán por orden y sin sonido. Los archivos se mantienen en memoria mientras esta pestaña esté abierta; al recargar, tendrás que seleccionarlos de nuevo.</p>
         <div class="media-controls">
           <label class="media-field" for="media-station">Estación
             <select id="media-station" class="field-select"></select>
           </label>
           <label class="media-field" for="media-video-1">Vídeo 1
-            <input id="media-video-1" class="media-input" type="file" accept="video/mp4,video/webm,video/ogg,video/*">
+            <input id="media-video-1" class="media-input" type="file" accept="video/mp4,video/webm,video/ogg,.mp4,.webm,.ogv,.ogg">
             <small id="media-name-1">Sin vídeo seleccionado</small>
           </label>
           <label class="media-field" for="media-video-2">Vídeo 2
-            <input id="media-video-2" class="media-input" type="file" accept="video/mp4,video/webm,video/ogg,video/*">
+            <input id="media-video-2" class="media-input" type="file" accept="video/mp4,video/webm,video/ogg,.mp4,.webm,.ogv,.ogg">
             <small id="media-name-2">Sin vídeo seleccionado</small>
           </label>
         </div>
@@ -120,9 +124,13 @@
     <section id="public-view" class="public-view" hidden aria-label="Modo público de las estaciones">
       <div class="public-header">
         <div><p class="eyebrow">BEAUTY TECH · EXPERIENCIA EN TIENDA</p><h1>Descubre tu próximo <em>ritual.</em></h1></div>
-        <div class="public-status"><i></i> EXPERIENCIA ACTIVA</div>
+        <div class="public-header-actions"><div class="public-status"><i></i> <span id="public-mode-label">ESPERA DE PRESENCIA</span></div><button class="button button-secondary" id="guided-stop" type="button" hidden>Detener demostración</button></div>
       </div>
       <div id="public-grid" class="device-grid public-grid"></div>
+      <section id="guided-complete" class="guided-complete" aria-live="polite" hidden>
+        <div><p class="eyebrow">RECORRIDO COMPLETADO</p><h2>La experiencia está lista para volver a empezar.</h2></div>
+        <div class="action-row"><button class="button button-secondary" id="guided-repeat" type="button">Repetir demostración</button><button class="button button-primary" id="guided-return" type="button">Volver a administración</button></div>
+      </section>
       <div class="public-bottom"><span>BEAUTY, PERSONALIZED.</span><span>Una nueva forma de descubrir el cuidado.</span></div>
     </section>
   </main>

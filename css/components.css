@@ -6,6 +6,11 @@
 .config-card .station-number { display: block; font-size: 8px; color: var(--muted); letter-spacing: .1em; margin-bottom: 3px; }
 .config-card label { display: block; font-size: 9px; color: var(--muted); margin: 10px 0 5px; }
 .config-card select { width: 100%; min-height: 36px; border: 1px solid var(--line); background: var(--ivory); border-radius: 7px; padding: 0 8px; color: var(--ink); font-size: 10px; }
+.config-card input:not([type="checkbox"]), .config-card textarea { width: 100%; min-height: 36px; border: 1px solid var(--line); background: var(--ivory); border-radius: 7px; padding: 8px; color: var(--ink); font: inherit; font-size: 10px; resize: vertical; }
+.config-card input:focus-visible, .config-card textarea:focus-visible, .config-card select:focus-visible { outline: 2px solid var(--champagne); outline-offset: 2px; }
+.timing-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.timing-fields label { min-width: 0; }
+.station-test { width: 100%; margin-top: 8px; }
 .toggle-row { display: flex !important; align-items: center; justify-content: space-between; gap: 8px; }
 .toggle { position: relative; width: 34px; height: 19px; display: inline-block; flex: 0 0 auto; }
 .toggle input { opacity: 0; width: 1px; height: 1px; position: absolute; }

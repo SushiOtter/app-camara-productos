@@ -2,7 +2,7 @@ import { appState, stationStates } from "./state.js";
 import { $, escapeHTML } from "./utils.js";
 import { iconSVG } from "./configuration.js";
 
-function deviceMarkup(station, index, withVideo = false) {
+function deviceMarkup(station, index, withVideo = false, publicMode = false) {
  const playing = station.state === stationStates.PLAYING || station.state === stationStates.ATTENTION;
  const disabled = !station.enabled;
  const stateLabel = disabled ? "DESACTIVADA" : station.state === stationStates.ATTENTION ? "INTERÉS DETECTADO" :
@@ -10,13 +10,13 @@ function deviceMarkup(station, index, withVideo = false) {
  const clip = station.currentClip;
  const title = clip ? clip.title : station.headline;
  const subtitle = clip ? clip.subtitle : station.copy;
- const campaign = clip ? `SELECCIÓN ${Math.min((station.clipIndex || 0) + 1, 2)} DE 2` : station.campaign;
+ const campaign = clip ? `SELECCIÓN ${Math.min((station.clipIndex || 0) + 1, 2)} DE 2` : `${station.contentType || "Campaña"} · ${station.family}`;
  const tags = clip ? (clip.tags || []).slice(0,3).join(" · ") : (station.tags || []).join(" · ");
  const media = withVideo && playing ? station.mediaFiles?.[station.clipIndex] : null;
  return `<article class="device ${playing?"is-playing":""} ${!station.enabled?"is-disabled":""}" style="--device-accent:${station.tint};--device-deep:${station.deep}" aria-label="${escapeHTML(station.name)}: ${stateLabel}">
   <div class="device-screen ${media ? "has-video" : ""}">
-   ${media ? `<video class="device-video" src="${escapeHTML(media.url)}" muted autoplay loop playsinline aria-label="Vídeo de ${escapeHTML(station.name)}"></video>` : ""}
-   <div class="device-top"><span class="device-icon">${iconSVG(station.icon)}</span><span class="device-index">BT / 0${index+1}</span></div>
+  ${media ? `<video class="device-video" src="${escapeHTML(media.url)}" data-station="${station.id}" data-slot="${station.clipIndex || 0}" data-media-url="${escapeHTML(media.url)}" muted autoplay loop playsinline aria-label="Vídeo de ${escapeHTML(station.name)}"></video>` : ""}
+  <div class="device-top"><span class="device-icon">${iconSVG(station.icon)}</span>${publicMode ? "" : `<span class="device-index">BT / 0${index+1}</span>`}</div>
    <div class="device-content">
     <p class="device-kicker">${escapeHTML(playing ? campaign : station.family)}</p>
     <h3 class="device-title">${escapeHTML(title)}</h3>
@@ -35,5 +35,14 @@ export function renderDevices() {
  const stations = [...appState.stations.values()];
  const admin = $("#device-grid"), pub = $("#public-grid");
  if (admin) admin.innerHTML = stations.map((s,i)=>deviceMarkup(s,i, appState.mode !== "public")).join("") + sensorMarkup();
- if (pub) pub.innerHTML = stations.map((s,i)=>deviceMarkup(s,i, appState.mode === "public")).join("") + sensorMarkup();
+ if (pub) pub.innerHTML = stations.filter(station => station.enabled).map((s,i)=>deviceMarkup(s,i, true, true)).join("");
+ document.querySelectorAll(".device-video").forEach(video => video.addEventListener("error", () => {
+  const station = appState.stations.get(video.dataset.station);
+  const slot = Number(video.dataset.slot);
+  if (!station || station.mediaFiles?.[slot]?.url !== video.dataset.mediaUrl) return;
+  station.mediaFiles[slot] = null;
+  const status = $("#media-status");
+  if (status) status.textContent = `No se pudo reproducir el vídeo de ${station.name}. Se muestra la composición de demostración; selecciona otro archivo para sustituirlo.`;
+  renderDevices();
+ }, { once: true }));
 }

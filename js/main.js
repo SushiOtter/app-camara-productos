@@ -10,7 +10,7 @@ import { initializeMediaControls } from "./media.js";
 async function boot() {
  try {
   const config = await loadConfiguration();
-  config.stations.forEach(station => appState.stations.set(station.id, { ...station, enabled: true, state: stationStates.IDLE }));
+    config.stations.forEach(station => appState.stations.set(station.id, { ...station, enabled: station.enabled ?? true, state: station.enabled === false ? stationStates.DISABLED : stationStates.IDLE }));
   renderConfigs();
   renderDevices();
   initializeEventEngine();
