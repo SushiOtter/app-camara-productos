@@ -1,6 +1,7 @@
 import { appState } from "./state.js";
 import { emitEvent } from "./events.js";
 import { $, escapeHTML } from "./utils.js";
+import { estimateAgeRange } from "./age.js";
 
 const TF_URL = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js";
 const BLAZEFACE_URL = "https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js";
@@ -270,7 +271,9 @@ function scanFrame(now, token) {
       const stationId = zoneAssignments[zone], station = stationId ? appState.stations.get(stationId) : null;
       metric("#metric-zone", `Z${zone + 1}${station ? ` · ${station.name}` : " · vacía"}`);
       status(`${detection.kind === "face" ? "Rostro" : "Persona"} detectado · ${Math.round(detection.score * 100)}% · Zona ${zone + 1}${station ? ` → ${station.name}` : " sin asignar"} · ${(dwellMs / 1000).toFixed(1)} s`, true);
-      if (station && dwellMs >= Number(station.dwellMs ?? appState.config.settings.attentionThresholdMs) && !triggeredThisPresence) onSustainedPresence({ confidence: detection.score, areaRatio, dwellMs, zone, station, kind: detection.kind });
+      if (station && dwellMs >= Number(station.dwellMs ?? appState.config.settings.attentionThresholdMs) && !triggeredThisPresence) {
+        void onSustainedPresence({ confidence: detection.score, areaRatio, dwellMs, zone, station, kind: detection.kind, token });
+      }
     }).catch(async error => {
       if (!stream || token !== startToken) return;
       console.error("Error de inferencia:", error);
@@ -284,7 +287,7 @@ function scanFrame(now, token) {
   }
   if (stream && token === startToken) rafId = requestAnimationFrame(t => scanFrame(t, token));
 }
-function onSustainedPresence({ confidence, areaRatio, dwellMs, zone, station, kind }) {
+async function onSustainedPresence({ confidence, areaRatio, dwellMs, zone, station, kind, token }) {
   const now = performance.now();
   if (!station) { status(`Zona ${zone + 1} sin estación asignada.`, true); triggeredThisPresence = true; return; }
   if (appState.mode !== "public") {
@@ -292,9 +295,22 @@ function onSustainedPresence({ confidence, areaRatio, dwellMs, zone, station, ki
     return;
   }
   if (!station.enabled) { status(`${station.name} está desactivada.`, true); triggeredThisPresence = true; return; }
+  triggeredThisPresence = true;
+  let ageGroup = null;
+  if (kind === "face") {
+    status("Rostro detectado. Estimando un rango de edad aproximado…", true);
+    try {
+      ageGroup = await estimateAgeRange(video);
+    } catch (error) {
+      console.error("No se pudo estimar el rango de edad:", error);
+      status("No se pudo estimar la edad. Se mostrarán recomendaciones generales.", true);
+    }
+    if (!stream || token !== startToken || appState.mode !== "public") return;
+    window.dispatchEvent(new CustomEvent("beautytech:age-estimated", { detail: { ageGroup } }));
+  }
   emitEvent("entry");
-  emitEvent("attention", station.id, { proximity: Math.min(0.95, 0.45 + areaRatio * 2.5), dwellMs, orientation: null, confidence, zone: zone + 1, source: kind === "face" ? "blazeface-face-zone-detection" : "coco-ssd-person-zone-detection" });
-  status(`Zona ${zone + 1} detectada por IA. Activando ${station.name}.`, true); triggeredThisPresence = true;
+  emitEvent("attention", station.id, { proximity: Math.min(0.95, 0.45 + areaRatio * 2.5), dwellMs, orientation: null, confidence, zone: zone + 1, ageGroup, source: kind === "face" ? "blazeface-face-zone-detection" : "coco-ssd-person-zone-detection" });
+  status(`Zona ${zone + 1} detectada por IA. Activando ${station.name}.`, true);
 }
 export function stopCamera(updateStatus = true) {
   startToken += 1; if (rafId) cancelAnimationFrame(rafId); rafId = 0;

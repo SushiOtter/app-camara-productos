@@ -4,10 +4,56 @@ import { renderDevices } from "./panels.js";
 import { emitEvent, resetStation, resetStations } from "./events.js";
 import { initializeCameraControls, resetCameraPreferences, stopCamera } from "./camera.js";
 import { clearSavedConfiguration, loadConfiguration, renderConfigs, saveConfiguration } from "./configuration.js";
+import { ageProfiles, getAgeProfile } from "./products.js";
 
 let guidedTimer = null;
 let guidedIndex = 0;
 const GUIDED_INTERVAL_KEY = "beauty-tech-guided-interval-v1";
+function updateAgeRecommendations(range, manuallySelected = false) {
+ const panel = $("#age-recommendation-panel");
+ const validRange = Object.prototype.hasOwnProperty.call(ageProfiles, range) && range !== "general";
+ const selectedRange = validRange ? range : null;
+ const profile = getAgeProfile(selectedRange);
+ const title = $("#age-recommendation-title");
+ const copy = $("#age-recommendation-copy");
+ const list = $("#age-product-list");
+ const select = $("#age-range-select");
+ panel.hidden = false;
+ title.textContent = selectedRange
+  ? `${manuallySelected ? "Rango seleccionado" : "Rango estimado"}: ${profile.label}`
+  : "No se pudo estimar la edad";
+ copy.textContent = selectedRange
+  ? manuallySelected
+   ? "Estas sugerencias generales se muestran para el rango que has elegido."
+   : "Estas sugerencias generales se muestran para el rango estimado. Puedes corregirlo si no coincide contigo."
+  : "Se muestran ideas generales. Si quieres, selecciona un rango para adaptar las sugerencias.";
+ list.replaceChildren(...profile.products.map(product => {
+  const item = document.createElement("li");
+  item.textContent = product;
+  return item;
+ }));
+ if (select) select.value = selectedRange || "";
+}
+function resetAgeRecommendations() {
+ const panel = $("#age-recommendation-panel");
+ if (panel) panel.hidden = true;
+ const select = $("#age-range-select");
+ if (select) select.value = "";
+}
+function initializeAgeRecommendations() {
+ const select = $("#age-range-select");
+ select.innerHTML = `<option value="" selected disabled>Selecciona un rango</option>${Object.entries(ageProfiles)
+  .filter(([range]) => range !== "general")
+  .map(([range, profile]) => `<option value="${range}">${profile.label}</option>`).join("")}`;
+ $("#age-range-update").addEventListener("click", () => {
+  if (!ageProfiles[select.value] || select.value === "general") return announce("Selecciona un rango de edad para actualizar las sugerencias.");
+  updateAgeRecommendations(select.value, true);
+  announce("Sugerencias actualizadas para el rango seleccionado.");
+ });
+ window.addEventListener("beautytech:age-estimated", ({ detail = {} }) => {
+  if (appState.mode === "public") updateAgeRecommendations(detail.ageGroup);
+ });
+}
 function guidedIntervalMs() {
  const field = $("#guided-interval");
  const seconds = Math.max(12, Math.min(45, Number(field.value) || 14.5));
@@ -46,6 +92,7 @@ function startGuidedDemo() {
 
 export function initializeAdmin() {
  initializeCameraControls();
+ initializeAgeRecommendations();
  try {
    const savedInterval = Number(localStorage.getItem(GUIDED_INTERVAL_KEY));
    if (Number.isFinite(savedInterval) && savedInterval >= 12 && savedInterval <= 45) $("#guided-interval").value = String(savedInterval);
@@ -172,6 +219,7 @@ export function setPublicMode(enabled) {
  $("#admin-view").hidden = enabled;
  $("#public-view").hidden = !enabled;
  $("#public-mode-label").textContent = "ESPERA DE PRESENCIA";
+ resetAgeRecommendations();
  $("#guided-complete").hidden = true;
  $("#guided-stop").hidden = true;
  $("#admin-lock").textContent = enabled ? "Volver a administración ↗" : "Administración ↗";

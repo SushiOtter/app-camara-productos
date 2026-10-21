@@ -9,6 +9,6 @@ export const detectionCapabilities = Object.freeze({
   orientation: false,
   gaze: false,
   attentionInference: "presencia sostenida en una zona; no equivale a atención real",
-  ageEstimation: false,
+  ageEstimation: "rango aproximado en el navegador mediante @vladmandic/face-api",
   stationSelection: "asignación manual de zonas por el empleado"
 });

@@ -32,17 +32,19 @@ Se recomienda Python 3; no requiere Node.js ni instalación de paquetes. No abra
 - Configuración inicial de estaciones en `data/contenido.json`.
 - Motor de eventos `beautytech:event` y estados `idle`, `attention`, `playing`, `cooldown` y `disabled`.
 - Recomendación demostrativa de dos piezas por estación, con transición y regreso al reposo.
-- Detección experimental con BlazeFace/TensorFlow.js y COCO-SSD. Los modelos se cargan solo al activar la cámara; se muestran modelo, confianza, latencia, zona y hora real de la última detección.
+- Detección experimental con BlazeFace/TensorFlow.js y COCO-SSD. Al detectar un rostro en modo público, carga @vladmandic/face-api y estima localmente un rango de edad; muestra sugerencias de producto y permite corregir el rango.
+- Recomendaciones orientativas por rangos: menos de 18, 18–24, 25–34, 35–44 y 45 o más. No se muestra una edad exacta ni se utilizan predicciones de género.
 - Cinco zonas asignables y umbral de confianza ajustable. La cámara detecta presencia aproximada, no atención ni interés.
 - El lanzador Python elige un puerto libre si el puerto 8000 está ocupado.
 - Diseño responsive y respeto de preferencias de movimiento reducido.
 
 ## Límites importantes
 
-- La IA no identifica personas, no estima edad, no detecta la mirada y no confirma interés real.
+- La estimación visual de edad puede ser inexacta y no representa la edad real. El rango solo selecciona sugerencias generales; la edad no determina las necesidades de la piel.
+- La IA no identifica personas, no detecta la mirada y no confirma interés real. No realiza reconocimiento de identidad ni usa predicciones de género.
 - La zona se calcula dividiendo la imagen en cinco franjas horizontales. El empleado debe asociarlas manualmente a las estaciones visibles de izquierda a derecha. No es una calibración física de la tienda.
 - La presencia sostenida y el tamaño de la detección son aproximaciones, no una medición fiable de distancia o atención.
-- El código no guarda ni envía fotogramas. El navegador necesita permiso explícito para activar la cámara.
+- El código no guarda ni envía fotogramas. La inferencia y el rango estimado se procesan en el navegador; el rango permanece solo en la vista pública mientras está abierta y no se guarda ni se envía a un servidor. El navegador necesita permiso explícito para activar la cámara.
 - No se incluyen vídeos comerciales ni fotografías de producto. Sin vídeos locales, las estaciones muestran composiciones visuales propias de demostración.
 - No incluye comunicación entre tablets físicas, backend, modo kiosco ni analítica de producción.
 - El recorrido guiado es una simulación para presentar el flujo; no representa una detección real. Para un despliegue real hay que revisar accesibilidad, rendimiento, dispositivos, consentimiento/información, base jurídica y obligaciones de privacidad con los responsables correspondientes.
@@ -51,7 +53,7 @@ Se recomienda Python 3; no requiere Node.js ni instalación de paquetes. No abra
 
 - Si se abre el archivo directamente, la página muestra un aviso para iniciar el servidor local.
 - Si aparece “No se pudo cargar la configuración”, comprueba que `data/contenido.json` está dentro de la carpeta y vuelve a iniciar el lanzador.
-- Si falla la IA, prueba primero **Probar recomendación**. La IA requiere conexión a internet para descargar sus bibliotecas y pesos; la interfaz y la simulación no dependen de esa conexión.
+- Si falla la IA, prueba primero **Probar recomendación**. La detección de presencia y el estimador de edad requieren conexión para descargar bibliotecas y pesos; la interfaz y la simulación no dependen de esa conexión.
 - La cámara necesita permiso y el navegador debe permitirla en localhost. Los modelos requieren conexión y acceso a `cdn.jsdelivr.net`; la UI y la demostración guiada funcionan sin conexión externa.
 
 ## Estructura
@@ -64,13 +66,14 @@ Se recomienda Python 3; no requiere Node.js ni instalación de paquetes. No abra
 - `js/events.js`: motor de eventos y ciclo de recomendación.
 - `js/panels.js`: renderizado de pantallas administrativas y públicas.
 - `js/admin.js`: administración y cambio de modo.
-- `js/camera.js`, `js/detection.js`: cámara, detección experimental y métricas de diagnóstico.
+- `js/camera.js`, `js/detection.js`, `js/age.js`: cámara, detección experimental, estimación orientativa de edad y métricas de diagnóstico.
+- `js/products.js`: sugerencias demostrativas para cada rango de edad.
 - `data/contenido.json`: contenido y parámetros operativos.
 - `iniciar_demo.py`, `INICIAR-DEMO.bat`: arranque local en Windows.
 
 ## Qué se guarda y privacidad
 
-La configuración, las zonas asignadas, el umbral de confianza y la duración del recorrido se guardan en `localStorage` de este navegador. No hay cuentas, backend ni sincronización. Los vídeos son URLs temporales en memoria: deben volver a seleccionarse tras recargar. No se guardan ni transmiten imágenes o datos biométricos; el procesamiento de cámara ocurre en el navegador.
+La configuración, las zonas asignadas, el umbral de confianza y la duración del recorrido se guardan en `localStorage` de este navegador. No hay cuentas, backend ni sincronización. Los vídeos son URLs temporales en memoria: deben volver a seleccionarse tras recargar. Los fotogramas y el rango de edad no se guardan ni se envían a un servidor: el procesamiento ocurre en el navegador y el rango solo permanece en memoria mientras está abierta la vista pública. La aplicación sí descarga bibliotecas y pesos de modelos desde `cdn.jsdelivr.net`.
 
 La división de la imagen en cinco franjas es solo una aproximación: no prueba que una persona mire una tablet ni representa necesariamente la geometría real de la tienda. Un despliegue real puede requerir calibración, sensores o cámaras adicionales y una revisión independiente de las obligaciones legales y de privacidad.
 

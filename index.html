@@ -67,7 +67,7 @@
           <div><p class="eyebrow">DETECCIÓN LOCAL EXPERIMENTAL</p><h2 id="vision-title">Prueba con cámara</h2></div>
           <span class="subtle-label">Procesamiento en este navegador</span>
         </div>
-        <p class="vision-copy">La IA detecta rostro o cuerpo para estimar presencia y zona. Asigna una estación a cada zona. <strong>No identifica personas, no detecta la mirada ni confirma interés real.</strong></p>
+        <p class="vision-copy">La IA detecta el rostro para estimar un rango de edad orientativo y la presencia para asignar una zona. Asigna una estación a cada zona. <strong>La edad puede ser inexacta; no identifica personas, no detecta la mirada ni confirma interés real.</strong></p>
         <div class="zone-config" id="zone-config" aria-label="Asignación de zonas a estaciones">
           <p class="zone-config-title">Asigna cada zona de la cámara a una estación</p>
           <div class="zone-selects" id="zone-selects"></div>
@@ -85,7 +85,7 @@
             <video id="camera-preview" class="camera-preview" muted playsinline aria-label="Vista previa de la cámara"></video>
             <canvas id="camera-overlay" class="camera-overlay" aria-hidden="true"></canvas>
           </div>
-          <div class="vision-status-wrap"><span class="vision-status-dot" id="camera-status-dot"></span><p id="camera-status" role="status" aria-live="polite">Cámara apagada. Puedes usar la simulación guiada si no quieres conceder acceso.</p><small id="camera-detail">La detección prioriza el rostro para responder rápido y usa la detección de persona como alternativa. Los modelos se descargan al activar la cámara y necesitan internet. El análisis se realiza en este navegador; no se guardan ni se envían imágenes.</small><div class="vision-metrics" aria-live="polite"><span>Modelo: <strong id="metric-model">Sin iniciar</strong></span><span>Confianza: <strong id="metric-confidence">—</strong></span><span>Inferencia: <strong id="metric-latency">—</strong></span><span>Zona: <strong id="metric-zone">—</strong></span><span>Última detección: <strong id="metric-last-detection">—</strong></span></div></div>
+          <div class="vision-status-wrap"><span class="vision-status-dot" id="camera-status-dot"></span><p id="camera-status" role="status" aria-live="polite">Cámara apagada. Puedes usar la simulación guiada si no quieres conceder acceso.</p><small id="camera-detail">La detección prioriza el rostro para responder rápido y usa la detección de persona como alternativa. El modelo de edad se descarga solo cuando se detecta un rostro; ambos requieren internet. El análisis se realiza en este navegador; no se guardan ni se envían imágenes.</small><div class="vision-metrics" aria-live="polite"><span>Modelo: <strong id="metric-model">Sin iniciar</strong></span><span>Confianza: <strong id="metric-confidence">—</strong></span><span>Inferencia: <strong id="metric-latency">—</strong></span><span>Zona: <strong id="metric-zone">—</strong></span><span>Última detección: <strong id="metric-last-detection">—</strong></span></div></div>
         </div>
       </section>
 
@@ -118,7 +118,7 @@
         </div>
         <div id="device-grid" class="device-grid"></div>
       </section>
-      <p class="footnote">PROTOTIPO · Detección de personas mediante IA en navegador · Sin reconocimiento de identidad ni detección de mirada.</p>
+      <p class="footnote">PROTOTIPO · Estimación orientativa de rango de edad y presencia en navegador · Sin reconocimiento de identidad ni detección de mirada.</p>
     </section>
 
     <section id="public-view" class="public-view" hidden aria-label="Modo público de las estaciones">
@@ -126,6 +126,20 @@
         <div><p class="eyebrow">BEAUTY TECH · EXPERIENCIA EN TIENDA</p><h1>Descubre tu próximo <em>ritual.</em></h1></div>
         <div class="public-header-actions"><div class="public-status"><i></i> <span id="public-mode-label">ESPERA DE PRESENCIA</span></div><button class="button button-secondary" id="guided-stop" type="button" hidden>Detener demostración</button></div>
       </div>
+      <section id="age-recommendation-panel" class="age-recommendation-panel" aria-live="polite" hidden>
+        <div>
+          <p class="eyebrow">SELECCIÓN ORIENTATIVA</p>
+          <h2 id="age-recommendation-title">Ideas para tu rutina</h2>
+          <p id="age-recommendation-copy"></p>
+          <ul id="age-product-list"></ul>
+          <small>La edad no determina las necesidades de la piel. Estas sugerencias son generales y puedes elegir otro rango.</small>
+        </div>
+        <div class="age-range-control">
+          <label for="age-range-select">Rango de edad</label>
+          <select id="age-range-select" class="field-select"></select>
+          <button id="age-range-update" class="button button-secondary" type="button">Actualizar sugerencias</button>
+        </div>
+      </section>
       <div id="public-grid" class="device-grid public-grid"></div>
       <section id="guided-complete" class="guided-complete" aria-live="polite" hidden>
         <div><p class="eyebrow">RECORRIDO COMPLETADO</p><h2>La experiencia está lista para volver a empezar.</h2></div>
