@@ -6,13 +6,13 @@
   <meta name="theme-color" content="#1b1816">
   <title>Beauty Tech — Experiencia de retail inteligente</title>
   <link rel="icon" href="assets/icons/beauty-tech.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/tokens.css?v=10">
-  <link rel="stylesheet" href="css/fonts.css?v=10">
-  <link rel="stylesheet" href="css/main.css?v=10">
-  <link rel="stylesheet" href="css/layout.css?v=10">
-  <link rel="stylesheet" href="css/components.css?v=10">
-  <link rel="stylesheet" href="css/animations.css?v=10">
-  <link rel="stylesheet" href="css/responsive.css?v=10">
+  <link rel="stylesheet" href="css/tokens.css?v=11">
+  <link rel="stylesheet" href="css/fonts.css?v=11">
+  <link rel="stylesheet" href="css/main.css?v=11">
+  <link rel="stylesheet" href="css/layout.css?v=11">
+  <link rel="stylesheet" href="css/components.css?v=11">
+  <link rel="stylesheet" href="css/animations.css?v=11">
+  <link rel="stylesheet" href="css/responsive.css?v=11">
   <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
@@ -52,7 +52,7 @@
         </div>
         <div id="station-configs" class="station-configs"></div>
         <div class="admin-footer">
-          <div class="config-note"><span class="note-icon">✦</span><span><strong>Configuración local</strong><small>Los cambios se guardan en este navegador. Los vídeos solo duran esta sesión.</small></span></div>
+          <div class="config-note"><span class="note-icon">✦</span><span><strong>Configuración local</strong><small>Los cambios y enlaces se guardan en este navegador. Los archivos solo duran esta sesión.</small></span></div>
           <div class="action-row">
             <button class="button button-secondary" id="test-event" type="button">Probar recomendación</button>
             <label class="guided-interval" for="guided-interval">Segundos por estación<input id="guided-interval" type="number" min="12" max="45" step="0.5" value="14.5"></label>
@@ -92,21 +92,33 @@
       <section class="vision-panel media-panel" aria-labelledby="media-title">
         <div class="section-heading">
           <div><p class="eyebrow">CONTENIDO DE LAS ESTACIONES</p><h2 id="media-title">Vídeos de demostración</h2></div>
-          <span class="subtle-label">Archivos locales · sin subir a internet</span>
+          <span class="subtle-label">Archivos locales o enlaces</span>
         </div>
-        <p class="vision-copy">Elige una estación y carga hasta dos vídeos MP4, WebM u Ogg. Cuando se active, se reproducirán por orden y sin sonido. Los archivos se mantienen en memoria mientras esta pestaña esté abierta; al recargar, tendrás que seleccionarlos de nuevo.</p>
+        <p class="vision-copy">Elige una estación y prepara hasta dos vídeos MP4, WebM u Ogg: puedes cargar el archivo o pegar un enlace de YouTube, TikTok, Instagram o un enlace directo al vídeo. Los archivos y enlaces directos se reproducen dentro de la pantalla, ajustados sin texto encima. Los enlaces de redes sociales se abren en una pestaña aparte para evitar reproductores incrustados, avisos de cookies y errores de inserción; la plataforma puede pedir iniciar sesión allí.</p>
         <div class="media-controls">
           <label class="media-field" for="media-station">Estación
             <select id="media-station" class="field-select"></select>
           </label>
-          <label class="media-field" for="media-video-1">Vídeo 1
-            <input id="media-video-1" class="media-input" type="file" accept="video/mp4,video/webm,video/ogg,.mp4,.webm,.ogv,.ogg">
+          <div class="media-slot">
+            <label class="media-field" for="media-video-1">Vídeo 1 · archivo
+              <input id="media-video-1" class="media-input" type="file" accept="video/mp4,video/webm,video/ogg,.mp4,.webm,.ogv,.ogg">
+            </label>
+            <label class="media-field" for="media-url-1">o enlace
+              <input id="media-url-1" class="media-input media-url-input" type="url" placeholder="https://..." autocomplete="off">
+            </label>
+            <button class="button button-secondary media-add-url" data-media-url-slot="0" type="button">Preparar enlace</button>
             <small id="media-name-1">Sin vídeo seleccionado</small>
-          </label>
-          <label class="media-field" for="media-video-2">Vídeo 2
-            <input id="media-video-2" class="media-input" type="file" accept="video/mp4,video/webm,video/ogg,.mp4,.webm,.ogv,.ogg">
+          </div>
+          <div class="media-slot">
+            <label class="media-field" for="media-video-2">Vídeo 2 · archivo
+              <input id="media-video-2" class="media-input" type="file" accept="video/mp4,video/webm,video/ogg,.mp4,.webm,.ogv,.ogg">
+            </label>
+            <label class="media-field" for="media-url-2">o enlace
+              <input id="media-url-2" class="media-input media-url-input" type="url" placeholder="https://..." autocomplete="off">
+            </label>
+            <button class="button button-secondary media-add-url" data-media-url-slot="1" type="button">Preparar enlace</button>
             <small id="media-name-2">Sin vídeo seleccionado</small>
-          </label>
+          </div>
         </div>
         <p id="media-status" class="media-status" role="status" aria-live="polite">Carga contenido opcional para sustituir las composiciones visuales de demostración.</p>
       </section>

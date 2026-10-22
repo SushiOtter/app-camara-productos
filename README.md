@@ -1,6 +1,6 @@
 # Beauty Tech Retail Experience
 
-**Versión 10.** Prototipo navegable para presentar una experiencia de retail de belleza con cinco estaciones, un panel de administración y una vista pública separada.
+**Versión 11.** Prototipo navegable para presentar una experiencia de retail de belleza con cinco estaciones, un panel de administración y una vista pública separada.
 
 Prototipo web local para presentar una experiencia de recomendación automática en una tienda de belleza. Incluye cinco estaciones comerciales, una pantalla de entrada/sensor conceptual, administración, modo público y detección experimental de personas mediante cámara.
 
@@ -19,7 +19,7 @@ Se recomienda Python 3; no requiere Node.js ni instalación de paquetes. No abra
 2. Pulsa **Probar estación** para ver una estación concreta, o **Probar recomendación** para probar la primera estación habilitada.
 3. Para presentar el flujo completo sin cámara, configura los segundos por estación y pulsa **Iniciar demostración guiada**. La pantalla pública indica que es una simulación. Puedes detenerla en cualquier momento, repetirla al finalizar o volver a administración.
 4. Pulsa **Iniciar modo público** para mostrar solo las estaciones activas, sin controles ni diagnósticos.
-5. En «Vídeos de demostración», elige una estación y selecciona hasta dos archivos MP4, WebM u Ogg. Se reproducen en silencio y por orden; si el navegador no puede decodificarlos, se usa la composición de reserva.
+5. En «Vídeos de demostración», elige una estación y prepara hasta dos vídeos mediante archivo MP4, WebM u Ogg, o pegando una URL de YouTube, TikTok, Instagram o un enlace directo a un vídeo. Los archivos y enlaces directos se reproducen en la pantalla sin texto superpuesto y ajustados al marco. Los enlaces de redes sociales abren la publicación fuera de la app para evitar avisos de cookies y errores de inserción. Los enlaces se guardan en este navegador.
 6. Para experimentar con cámara, asigna las zonas, ajusta la confianza mínima, pulsa **Activar cámara** y acepta el permiso. Luego inicia el modo público. La detección solo activa una estación con cámara en vivo y modelo cargado.
 
 ## Funciones implementadas
@@ -28,7 +28,7 @@ Se recomienda Python 3; no requiere Node.js ni instalación de paquetes. No abra
 - Guardado local de configuración, zonas de cámara, confianza mínima y duración de la demostración; **Restaurar valores iniciales** restaura preferencias y estaciones.
 - Modo público sin controles administrativos, sensor ni códigos técnicos.
 - Prueba manual individual, prueba rápida y recorrido guiado secuencial (12–45 s por estación), completamente utilizable sin cámara.
-- Carga de hasta dos vídeos locales por estación. Se reproducen sin sonido y en secuencia. Los archivos no se suben y deben seleccionarse de nuevo tras recargar.
+- Hasta dos vídeos por estación: archivos locales (MP4, WebM u Ogg), URLs de YouTube, TikTok o Instagram y enlaces directos a esos formatos. Los archivos y enlaces directos se reproducen en secuencia y ajustados al marco; las redes sociales se abren en otra pestaña porque sus reproductores incrustados pueden mostrar avisos de cookies o bloquear la inserción. Los archivos locales no se suben y deben seleccionarse de nuevo tras recargar.
 - Configuración inicial de estaciones en `data/contenido.json`.
 - Motor de eventos `beautytech:event` y estados `idle`, `attention`, `playing`, `cooldown` y `disabled`.
 - Recomendación demostrativa de dos piezas por estación, con transición y regreso al reposo.
@@ -73,7 +73,7 @@ Se recomienda Python 3; no requiere Node.js ni instalación de paquetes. No abra
 
 ## Qué se guarda y privacidad
 
-La configuración, las zonas asignadas, el umbral de confianza y la duración del recorrido se guardan en `localStorage` de este navegador. No hay cuentas, backend ni sincronización. Los vídeos son URLs temporales en memoria: deben volver a seleccionarse tras recargar. Los fotogramas y el rango de edad no se guardan ni se envían a un servidor: el procesamiento ocurre en el navegador y el rango solo permanece en memoria mientras está abierta la vista pública. La aplicación sí descarga bibliotecas y pesos de modelos desde `cdn.jsdelivr.net`.
+La configuración, las zonas asignadas, el umbral de confianza, la duración del recorrido y los enlaces de vídeo se guardan en `localStorage` de este navegador. No hay cuentas, backend ni sincronización. Los archivos de vídeo locales solo viven en memoria y deben volver a seleccionarse tras recargar; no se suben. Los enlaces de YouTube, TikTok e Instagram se abren en el servicio original fuera de la app; sus páginas pueden solicitar cookies o inicio de sesión según sus propias políticas. Los fotogramas y el rango de edad no se guardan ni se envían a un servidor: el procesamiento ocurre en el navegador y el rango solo permanece en memoria mientras está abierta la vista pública. La aplicación sí descarga bibliotecas y pesos de modelos desde `cdn.jsdelivr.net`.
 
 La división de la imagen en cinco franjas es solo una aproximación: no prueba que una persona mire una tablet ni representa necesariamente la geometría real de la tienda. Un despliegue real puede requerir calibración, sensores o cámaras adicionales y una revisión independiente de las obligaciones legales y de privacidad.
 

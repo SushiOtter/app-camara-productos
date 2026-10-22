@@ -84,5 +84,9 @@ button:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
 .media-field { display: grid; gap: 8px; font-size: .78rem; font-weight: 600; min-width: 0; }
 .media-input { display: block; width: 100%; max-width: 100%; font: inherit; font-size: .72rem; color: var(--muted); }
 .media-field small { min-height: 1.2em; color: var(--muted); font-weight: 400; overflow-wrap: anywhere; }
+.media-slot { display: grid; align-content: start; gap: 9px; min-width: 0; }
+.media-slot .media-field { gap: 6px; }
+.media-url-input { min-height: 36px; padding: 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--ivory); color: var(--ink); }
+.media-add-url { justify-self: start; }
 .media-status { margin: 12px 0 0; font-size: .78rem; color: var(--muted); }
 @media (max-width: 760px) { .media-controls { grid-template-columns: 1fr; } }
