@@ -1,6 +1,6 @@
 import { appState, stationStates } from "./state.js";
 import { announce } from "./utils.js";
-import { renderDevices } from "./panels.js";
+import { renderDevices } from "./panels.js?v=18";
 
 const timers = new Map();
 const attentionTimers = new Map();
@@ -24,6 +24,44 @@ export function initializeEventEngine() {
     if (detail.type === "lost-attention" && detail.stationId) finishStation(detail.stationId, "lost");
     if (detail.type === "session-end") endSession();
   });
+  window.addEventListener("beautytech:age-estimated", ({ detail }) => {
+    const station = appState.stations.get(detail.stationId);
+    if (!station || !detail.ageGroup || !station.loopWhilePresent || station.state !== stationStates.PLAYING) return;
+    station.activeSignals ||= {};
+    station.activeSignals.ageGroup = detail.ageGroup;
+    const playlist = buildMediaPlaylist(station, station.activeSignals);
+    if (!playlist.length || playlist[0] === station.mediaSlot) return;
+    station.mediaPlaylist = playlist;
+    station.mediaCursor = 0;
+    playNextMedia(station);
+  });
+  window.addEventListener("beautytech:media-ended", ({ detail }) => {
+    const station = appState.stations.get(detail.stationId);
+    if (!station || station.state !== stationStates.PLAYING || !station.mediaPlaylist?.length) return;
+    if (station.mediaFiles?.[detail.slot]?.url !== detail.url) return;
+    station.mediaCursor = (station.mediaCursor + 1) % station.mediaPlaylist.length;
+    playNextMedia(station);
+  });
+  window.addEventListener("beautytech:media-error", ({ detail }) => {
+    const station = appState.stations.get(detail.stationId);
+    if (!station || station.state !== stationStates.PLAYING || !station.mediaPlaylist?.length) return;
+    if (station.mediaFiles?.[detail.slot]?.url !== detail.url) return;
+    station.mediaPlaylist = station.mediaPlaylist.filter(slot => slot !== detail.slot);
+    if (!station.mediaPlaylist.length) {
+      station.mediaCursor = 0;
+      station.mediaSlot = null;
+      if (station.loopWhilePresent) {
+        station.clipIndex = 0;
+        announce(`No se pudo reproducir el vídeo de ${station.name}; se mostrarán sus recomendaciones mientras haya presencia.`);
+        playNextClip(station);
+      } else {
+        finishStation(station.id, "complete");
+      }
+      return;
+    }
+    station.mediaCursor %= station.mediaPlaylist.length;
+    playNextMedia(station);
+  });
 }
 
 function startSession() {
@@ -34,6 +72,10 @@ function startSession() {
 
 function refreshSessionTimeout() {
   clearTimeout(appState.sessionTimer);
+  if (appState.presentationMode && appState.mode === "public") {
+    appState.sessionTimer = null;
+    return;
+  }
   appState.sessionTimer = setTimeout(endSession, appState.config.settings.sessionTimeoutMs);
 }
 
@@ -51,9 +93,23 @@ function rankClips(station, signals = {}) {
     const text = `${clip.title} ${clip.subtitle} ${(clip.tags || []).join(" ")}`.toLowerCase();
     const overlap = (station.tags || []).filter(tag => text.includes(String(tag).toLowerCase())).length;
     const categoryMatch = familyTerms.split(/\s+/).filter(term => term.length > 3 && text.includes(term)).length;
-    const score = 50 + overlap * 8 + categoryMatch * 4 + Math.min(dwell / 500, 20) + proximity * 10 + orientation * 5 - index * 0.25;
+    const demoProfile = signals.demoProfile || appState.demoProfile || {};
+    const profileTerms = [demoProfile.hairTexture, demoProfile.hairLength, demoProfile.beard]
+      .filter(Boolean).join(" ");
+    const profileMatch = profileTerms && profileTerms.split(/\s+/).some(term => text.includes(term)) ? 18 : 0;
+    const score = 50 + overlap * 8 + categoryMatch * 4 + profileMatch + Math.min(dwell / 500, 20) + proximity * 10 + orientation * 5 - index * 0.25;
     return { ...clip, score };
   }).sort((a, b) => b.score - a.score).slice(0, 2);
+}
+
+function buildMediaPlaylist(station, signals = {}) {
+  const profile = signals.demoProfile || appState.demoProfile || {};
+  const profileValues = [signals.ageGroup, profile.ageRange, profile.hairTexture, profile.hairLength, profile.beard].filter(Boolean);
+  const availableMedia = (station.mediaFiles || []).map((media, slot) => ({ media, slot }))
+    .filter(item => item.media && item.media.kind !== "external" && !item.media.failed);
+  const matchingMedia = availableMedia.filter(({ media }) => media.audience && media.audience !== "all" && profileValues.includes(media.audience));
+  const generalMedia = availableMedia.filter(({ media }) => !media.audience || media.audience === "all");
+  return (profileValues.length ? [...matchingMedia, ...generalMedia] : generalMedia).map(item => item.slot);
 }
 
 function activateStation(id, signals = {}) {
@@ -73,8 +129,12 @@ function activateStation(id, signals = {}) {
   clearTimeout(attentionTimers.get(id));
   station.state = stationStates.ATTENTION;
   station.activeSignals = signals;
+  station.loopWhilePresent = String(signals.source || "").includes("detection");
   station.recommendations = rankClips(station, signals);
   station.clipIndex = 0;
+  station.mediaPlaylist = buildMediaPlaylist(station, signals);
+  station.mediaCursor = 0;
+  station.mediaSlot = station.mediaPlaylist.length ? station.mediaPlaylist[0] : null;
   renderDevices();
 
   const attentionTimer = setTimeout(() => {
@@ -83,19 +143,33 @@ function activateStation(id, signals = {}) {
     station.state = stationStates.PLAYING;
     renderDevices();
     refreshSessionTimeout();
-    playNextClip(station);
+    if (station.mediaPlaylist.length) playNextMedia(station);
+    else playNextClip(station);
   }, Math.max(0, Number(station.dwellMs ?? appState.config.settings.attentionThresholdMs) - Math.max(0, Number(signals.dwellMs) || 0)));
   attentionTimers.set(id, attentionTimer);
+}
+
+function playNextMedia(station) {
+  if (appState.mode !== "public" || !station.enabled || station.state !== stationStates.PLAYING) return;
+  station.mediaSlot = station.mediaPlaylist[station.mediaCursor];
+  station.clipIndex = station.mediaCursor;
+  station.currentClip = station.clips?.[station.mediaSlot] || station.recommendations[station.mediaCursor % station.recommendations.length] || station.recommendations[0];
+  renderDevices();
+  clearTimeout(timers.get(station.id));
 }
 
 function playNextClip(station) {
   if (appState.mode !== "public" || !station.enabled) return;
   const clips = station.recommendations || [];
   if (station.clipIndex >= clips.length) {
-    finishStation(station.id, "complete");
-    return;
+    if (station.loopWhilePresent && clips.length) station.clipIndex = 0;
+    else {
+      finishStation(station.id, "complete");
+      return;
+    }
   }
   station.currentClip = clips[station.clipIndex];
+  station.mediaSlot = null;
   renderDevices();
   const duration = Math.max(2500, Number(station.currentClip.durationMs) || 6000);
   timers.set(station.id, setTimeout(() => {
@@ -112,6 +186,9 @@ function finishStation(id, reason = "complete") {
   attentionTimers.delete(id);
   station.currentClip = null;
   station.recommendations = [];
+  station.mediaPlaylist = [];
+  station.mediaSlot = null;
+  station.loopWhilePresent = false;
   station.state = station.enabled ? stationStates.COOLDOWN : stationStates.DISABLED;
   if (reason === "lost" && appState.mode === "public") {
     const modeLabel = document.querySelector("#public-mode-label");
@@ -134,6 +211,9 @@ function endSession() {
     station.state = station.enabled ? stationStates.IDLE : stationStates.DISABLED;
     station.currentClip = null;
     station.recommendations = [];
+    station.mediaPlaylist = [];
+    station.mediaSlot = null;
+    station.loopWhilePresent = false;
   }
   renderDevices();
   announce("Sesión finalizada. Las estaciones vuelven al estado ambiental.");
@@ -149,7 +229,10 @@ export function resetStation(id) {
   station.state = station.enabled ? stationStates.IDLE : stationStates.DISABLED;
   station.currentClip = null;
   station.recommendations = [];
+  station.mediaPlaylist = [];
+  station.mediaSlot = null;
   station.clipIndex = 0;
+  station.loopWhilePresent = false;
   station.activeSignals = null;
 }
 

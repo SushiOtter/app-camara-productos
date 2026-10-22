@@ -1,6 +1,6 @@
 # Beauty Tech Retail Experience
 
-**Versión 11.** Prototipo navegable para presentar una experiencia de retail de belleza con cinco estaciones, un panel de administración y una vista pública separada.
+**Versión 18.** Prototipo navegable para presentar una experiencia de retail de belleza con cinco estaciones, un panel de administración y una vista pública separada.
 
 Prototipo web local para presentar una experiencia de recomendación automática en una tienda de belleza. Incluye cinco estaciones comerciales, una pantalla de entrada/sensor conceptual, administración, modo público y detección experimental de personas mediante cámara.
 
@@ -15,12 +15,10 @@ Se recomienda Python 3; no requiere Node.js ni instalación de paquetes. No abra
 
 ## Cómo hacer la demostración
 
-1. En Administración, cambia nombre, descripción, familia, campaña y tipo de contenido. Activa o desactiva estaciones y ajusta permanencia y espera.
-2. Pulsa **Probar estación** para ver una estación concreta, o **Probar recomendación** para probar la primera estación habilitada.
-3. Para presentar el flujo completo sin cámara, configura los segundos por estación y pulsa **Iniciar demostración guiada**. La pantalla pública indica que es una simulación. Puedes detenerla en cualquier momento, repetirla al finalizar o volver a administración.
-4. Pulsa **Iniciar modo público** para mostrar solo las estaciones activas, sin controles ni diagnósticos.
-5. En «Vídeos de demostración», elige una estación y prepara hasta dos vídeos mediante archivo MP4, WebM u Ogg, o pegando una URL de YouTube, TikTok, Instagram o un enlace directo a un vídeo. Los archivos y enlaces directos se reproducen en la pantalla sin texto superpuesto y ajustados al marco. Los enlaces de redes sociales abren la publicación fuera de la app para evitar avisos de cookies y errores de inserción. Los enlaces se guardan en este navegador.
-6. Para experimentar con cámara, asigna las zonas, ajusta la confianza mínima, pulsa **Activar cámara** y acepta el permiso. Luego inicia el modo público. La detección solo activa una estación con cámara en vivo y modelo cargado.
+1. La entrada normal es el modo trabajador: selecciona una sección activa y pulsa **Iniciar experiencia**. La primera sección activa aparece preseleccionada.
+2. Permite el acceso a la cámara. La tablet entra en pantalla completa y espera; cuando detecta presencia, muestra automáticamente el contenido en bucle. Al alejarse la persona, vuelve a esperar. **Salir · Administración** detiene la cámara y abre la configuración.
+3. Para preparar contenido, pulsa **Administración**. En «Vídeos de demostración», asigna a cada sección hasta dos vídeos MP4/WebM/Ogg. Se pueden etiquetar para audiencia/perfil; los enlaces directos compatibles se reproducen automáticamente. YouTube, TikTok e Instagram se abren fuera de la experiencia, así que no son aptos para el bucle automático.
+4. Si no puedes usar una cámara durante la presentación, **Probar estación** y **Iniciar demostración guiada** simulan el flujo; la pantalla indica que es una simulación.
 
 ## Funciones implementadas
 
@@ -28,11 +26,15 @@ Se recomienda Python 3; no requiere Node.js ni instalación de paquetes. No abra
 - Guardado local de configuración, zonas de cámara, confianza mínima y duración de la demostración; **Restaurar valores iniciales** restaura preferencias y estaciones.
 - Modo público sin controles administrativos, sensor ni códigos técnicos.
 - Prueba manual individual, prueba rápida y recorrido guiado secuencial (12–45 s por estación), completamente utilizable sin cámara.
-- Hasta dos vídeos por estación: archivos locales (MP4, WebM u Ogg), URLs de YouTube, TikTok o Instagram y enlaces directos a esos formatos. Los archivos y enlaces directos se reproducen en secuencia y ajustados al marco; las redes sociales se abren en otra pestaña porque sus reproductores incrustados pueden mostrar avisos de cookies o bloquear la inserción. Los archivos locales no se suben y deben seleccionarse de nuevo tras recargar.
+- Hasta dos vídeos por estación: archivos locales (MP4, WebM u Ogg), URLs de YouTube, TikTok o Instagram y enlaces directos a esos formatos. Los vídeos locales y enlaces directos compatibles se reproducen en secuencia al terminar cada clip y en bucle mientras dura la presencia; las redes sociales se abren fuera de la app y no forman parte del bucle. Los archivos locales no se suben y deben seleccionarse de nuevo tras recargar.
 - Configuración inicial de estaciones en `data/contenido.json`.
 - Motor de eventos `beautytech:event` y estados `idle`, `attention`, `playing`, `cooldown` y `disabled`.
 - Recomendación demostrativa de dos piezas por estación, con transición y regreso al reposo.
 - Detección experimental con BlazeFace/TensorFlow.js y COCO-SSD. Al detectar un rostro en modo público, carga @vladmandic/face-api y estima localmente un rango de edad; muestra sugerencias de producto y permite corregir el rango.
+- Modo presentación a pantalla completa: una selección de sección y un toque inician la cámara y el modo público. Solo se ve esa sección, una indicación de espera cuando no hay nadie, y el botón de salida arriba a la derecha (también Escape). Al detectar presencia se muestran los clips/vídeos en bucle; el ciclo se detiene al perder presencia.
+- Perfil de escenario opcional para probar selección de vídeos por rango de edad, textura y longitud del pelo o vello facial. El trabajador lo selecciona manualmente; la cámara solo detecta presencia y no infiere género ni rasgos personales.
+- Cada vídeo se puede asignar a un perfil orientativo; con un escenario elegido, la reproducción prioriza vídeos coincidentes y añade los marcados para cualquier perfil.
+- Reproducción de vídeos MP4, WebM u Ogg en secuencia con avance al final real del vídeo y repetición en bucle mientras dura la presencia. Para una presentación fiable, prepara los vídeos locales o enlaces directos compatibles con antelación.
 - Recomendaciones orientativas por rangos: menos de 18, 18–24, 25–34, 35–44 y 45 o más. No se muestra una edad exacta ni se utilizan predicciones de género.
 - Cinco zonas asignables y umbral de confianza ajustable. La cámara detecta presencia aproximada, no atención ni interés.
 - El lanzador Python elige un puerto libre si el puerto 8000 está ocupado.
@@ -41,12 +43,14 @@ Se recomienda Python 3; no requiere Node.js ni instalación de paquetes. No abra
 ## Límites importantes
 
 - La estimación visual de edad puede ser inexacta y no representa la edad real. El rango solo selecciona sugerencias generales; la edad no determina las necesidades de la piel.
+- La cámara de esta demo no detecta ni clasifica género, barba, longitud del pelo o pelo rizado/liso. Tampoco determina qué necesita alguien; las recomendaciones por edad son ideas generales y experimentales. Para una sección capilar, se pueden preparar vídeos organizados por tipo de producto o necesidad del catálogo, sin inferir rasgos personales.
 - La IA no identifica personas, no detecta la mirada y no confirma interés real. No realiza reconocimiento de identidad ni usa predicciones de género.
 - La zona se calcula dividiendo la imagen en cinco franjas horizontales. El empleado debe asociarlas manualmente a las estaciones visibles de izquierda a derecha. No es una calibración física de la tienda.
 - La presencia sostenida y el tamaño de la detección son aproximaciones, no una medición fiable de distancia o atención.
 - El código no guarda ni envía fotogramas. La inferencia y el rango estimado se procesan en el navegador; el rango permanece solo en la vista pública mientras está abierta y no se guarda ni se envía a un servidor. El navegador necesita permiso explícito para activar la cámara.
 - No se incluyen vídeos comerciales ni fotografías de producto. Sin vídeos locales, las estaciones muestran composiciones visuales propias de demostración.
 - No incluye comunicación entre tablets físicas, backend, modo kiosco ni analítica de producción.
+- La cámara usa BlazeFace/TensorFlow.js desde jsDelivr y necesita permiso, navegador compatible e internet en el primer arranque. La IA disponible detecta rostro/persona y puede estimar un rango de edad orientativo en segundo plano; no reconoce género, barba, longitud ni textura del pelo.
 - El recorrido guiado es una simulación para presentar el flujo; no representa una detección real. Para un despliegue real hay que revisar accesibilidad, rendimiento, dispositivos, consentimiento/información, base jurídica y obligaciones de privacidad con los responsables correspondientes.
 
 ## Diagnóstico si algo no aparece

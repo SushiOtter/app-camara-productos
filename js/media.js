@@ -1,6 +1,6 @@
 import { appState } from "./state.js";
 import { $, escapeHTML } from "./utils.js";
-import { renderDevices } from "./panels.js";
+import { renderDevices } from "./panels.js?v=18";
 
 const objectUrls = new Set();
 let selectedStationId = "";
@@ -18,6 +18,8 @@ function updateMediaLabels() {
   $("#media-name-2").textContent = station.mediaFiles[1]?.name || "Sin vídeo seleccionado";
   $("#media-url-1").value = station.mediaFiles[0]?.sourceUrl || "";
   $("#media-url-2").value = station.mediaFiles[1]?.sourceUrl || "";
+  $("#media-audience-1").value = station.mediaFiles[0]?.audience || "all";
+  $("#media-audience-2").value = station.mediaFiles[1]?.audience || "all";
 }
 
 function releaseMedia(station, slot) {
@@ -31,7 +33,9 @@ function releaseMedia(station, slot) {
 function saveMediaLinks() {
   const links = Object.fromEntries([...appState.stations.values()].map(station => [
     station.id,
-    (station.mediaFiles || [null, null]).map(media => media?.sourceUrl || null)
+    (station.mediaFiles || [null, null]).map(media => media?.sourceUrl
+      ? { url: media.sourceUrl, audience: media.audience || "all" }
+      : null)
   ]));
   try {
     localStorage.setItem(MEDIA_STORAGE_KEY, JSON.stringify(links));
@@ -45,6 +49,7 @@ function saveMediaLinks() {
 function setMedia(station, slot, media, persistLink = false) {
   const replacingSavedLink = Boolean(station.mediaFiles?.[slot]?.sourceUrl);
   station.mediaFiles ||= [null, null];
+  media.audience = $(`#media-audience-${slot + 1}`)?.value || "all";
   releaseMedia(station, slot);
   station.mediaFiles[slot] = media;
   updateMediaLabels();
@@ -84,7 +89,8 @@ function parseVideoUrl(value) {
       ? url.pathname.split("/").filter(Boolean)[0]
       : url.searchParams.get("v") || url.pathname.match(/^\/(?:embed|shorts|live)\/([^/?]+)/)?.[1];
     if (!videoId || !/^[\w-]{11}$/.test(videoId)) throw new Error("No se encontró un vídeo de YouTube válido en ese enlace.");
-    return { name: `YouTube · ${videoId}`, url: url.href, sourceUrl: url.href, provider: "YouTube", kind: "external" };
+    const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    return { name: `YouTube · ${videoId}`, url: watchUrl, sourceUrl: watchUrl, provider: "YouTube", kind: "external" };
   }
   if (["tiktok.com", "vm.tiktok.com", "vt.tiktok.com"].includes(host)) {
     const videoId = url.pathname.match(/\/video\/(\d+)/)?.[1] || url.pathname.match(/^\/player\/v1\/(\d+)/)?.[1];
@@ -123,9 +129,11 @@ function restoreMediaLinks() {
       if (!station || !Array.isArray(urls)) continue;
       station.mediaFiles = [null, null];
       urls.slice(0, 2).forEach((value, slot) => {
-        if (typeof value !== "string" || !value.trim()) return;
+        const sourceUrl = typeof value === "string" ? value : value?.url;
+        if (typeof sourceUrl !== "string" || !sourceUrl.trim()) return;
         try {
-          station.mediaFiles[slot] = parseVideoUrl(value);
+          station.mediaFiles[slot] = parseVideoUrl(sourceUrl);
+          station.mediaFiles[slot].audience = value?.audience || "all";
         } catch (error) {
           console.warn(`Se omitió un enlace de vídeo guardado no válido para ${stationId}:`, error);
         }
@@ -154,6 +162,17 @@ export function initializeMediaControls() {
   });
   $("#media-video-1")?.addEventListener("change", event => setVideo(0, event.target.files?.[0]));
   $("#media-video-2")?.addEventListener("change", event => setVideo(1, event.target.files?.[0]));
+  document.querySelectorAll(".media-audience").forEach(select => select.addEventListener("change", () => {
+    const slot = Number(select.id.slice(-1)) - 1;
+    const station = currentStation();
+    if (!station?.mediaFiles?.[slot]) return;
+    station.mediaFiles[slot].audience = select.value;
+    if (station.mediaFiles[slot].sourceUrl && !saveMediaLinks()) {
+      $("#media-status").textContent = "No se pudo guardar el perfil asignado al enlace.";
+    } else {
+      $("#media-status").textContent = `Contenido del vídeo ${slot + 1} asignado a ${select.selectedOptions[0].textContent.toLowerCase()}.`;
+    }
+  }));
   document.querySelectorAll("[data-media-url-slot]").forEach(button => button.addEventListener("click", () => {
     setVideoUrl(Number(button.dataset.mediaUrlSlot));
   }));

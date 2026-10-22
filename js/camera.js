@@ -13,6 +13,7 @@ let rafId = 0, inferenceBusy = false, inferenceFailed = false, lastInferenceAt =
 let personStartedAt = 0, personPresent = false, triggeredThisPresence = false, latestZone = -1;
 let lastAdminNoticeAt = 0, zoneAssignments = [], startToken = 0, lastStatusKey = "";
 let missedDetectionSince = 0, cpuFallbackAttempted = false, inferenceCount = 0;
+let activeTargetStationId = "";
 const MIN_PERSON_CONFIDENCE = 0.20;
 const MIN_FACE_CONFIDENCE = 0.22;
 const MIN_PERSON_AREA = 0.003;
@@ -21,6 +22,7 @@ const INFERENCE_INTERVAL_MS = 220;
 const ZONE_COUNT = 5;
 const ZONE_STORAGE_KEY = "beauty-tech-camera-zones-v1";
 const CONFIDENCE_STORAGE_KEY = "beauty-tech-camera-confidence-v1";
+const STATION_STORAGE_KEY = "beauty-tech-camera-station-v1";
 let activationConfidence = 0.2;
 
 function status(message, active = false) {
@@ -84,10 +86,6 @@ async function ensureModels(onProgress) {
         metric("#metric-model", "Rostro (rápido)");
       } catch (error) { console.warn("BlazeFace no disponible; se usará COCO-SSD.", error); }
       if (!faceModel) await loadPersonModel(onProgress);
-      else {
-        // Descarga secundaria en paralelo; si falla, la detección facial sigue operativa.
-        loadPersonModel(onProgress).catch(error => console.warn("Detector de persona secundario no disponible:", error));
-      }
       if (!faceModel && !personModel) throw new Error("No se pudo cargar ningún modelo. Comprueba la conexión y que la red permita jsdelivr.net.");
     })().catch(error => { librariesPromise = null; throw error; });
   }
@@ -97,6 +95,20 @@ function buildZoneSelectors() {
   const root = $("#zone-selects"); if (!root) return;
   const stations = [...appState.stations.values()];
   const options = stations.map(station => `<option value="${station.id}">${escapeHTML(station.name)}</option>`).join("");
+  const cameraStation = $("#camera-station");
+  if (cameraStation) {
+    cameraStation.innerHTML = `${options}<option value="">Usar asignación por zonas</option>`;
+    let savedStation = "";
+    try { savedStation = localStorage.getItem(STATION_STORAGE_KEY) || ""; }
+    catch (error) { console.warn("No se pudo recuperar la sección de cámara.", error); }
+    cameraStation.value = stations.some(station => station.id === savedStation && station.enabled)
+      ? savedStation
+      : stations.find(station => station.enabled)?.id || "";
+    cameraStation.addEventListener("change", () => {
+      try { localStorage.setItem(STATION_STORAGE_KEY, cameraStation.value); }
+      catch (error) { console.error("No se pudo guardar la sección de cámara:", error); status("No se pudo guardar la sección seleccionada."); }
+    });
+  }
   root.innerHTML = Array.from({ length: ZONE_COUNT }, (_, index) => `
     <label class="zone-select" for="camera-zone-${index}">Zona ${index + 1}
       <select id="camera-zone-${index}" class="field-select" data-zone="${index}">${options}<option value="">No activar</option></select>
@@ -145,18 +157,20 @@ export function resetCameraPreferences() {
   try {
     localStorage.removeItem(ZONE_STORAGE_KEY);
     localStorage.removeItem(CONFIDENCE_STORAGE_KEY);
+    localStorage.removeItem(STATION_STORAGE_KEY);
   } catch (error) { console.error("No se pudieron restablecer las preferencias de cámara:", error); }
   activationConfidence = 0.2;
   $("#camera-confidence").value = "0.2";
   $("#camera-confidence-value").value = "20%";
+  if ($("#camera-station")) $("#camera-station").value = "";
   zoneAssignments = [...appState.stations.keys()];
   $("#zone-selects")?.querySelectorAll("select[data-zone]").forEach((select, index) => { select.value = zoneAssignments[index] || ""; });
 }
-async function startCamera() {
-  if (stream) return;
+export async function startCamera() {
+  if (stream) return true;
   const token = ++startToken;
   if (!navigator.mediaDevices?.getUserMedia) {
-    status("Este navegador no permite usar la cámara. Abre la demo en Chrome o Edge desde localhost."); return;
+    status("Este navegador no permite usar la cámara. Abre la demo en Chrome o Edge desde localhost."); return false;
   }
   setControls(true); status("Solicitando permiso de cámara…");
   metric("#metric-model", "Cargando"); metric("#metric-confidence", "—"); metric("#metric-latency", "—"); metric("#metric-zone", "—"); metric("#metric-last-detection", "—");
@@ -171,17 +185,19 @@ async function startCamera() {
     status("Cámara activa. Cargando el detector ligero…", true);
     try { await ensureModels(message => { if (token === startToken && stream) status(message, true); }); }
     catch (error) {
-      if (token !== startToken || !stream) return;
+      if (token !== startToken || !stream) return false;
       console.error("Carga de IA fallida:", error);
+      stopCamera(false);
       status(`La cámara funciona, pero no se pudo cargar la IA: ${error?.message || "error de descarga"}. Detén la cámara y vuelve a intentarlo.`, true);
-      metric("#metric-model", "Error de carga"); return;
+      metric("#metric-model", "Error de carga"); return false;
     }
-    if (token !== startToken || !stream) return;
+    if (token !== startToken || !stream) return false;
     status(`IA lista (${faceModel ? "rostro rápido" : "persona"}${personModel ? " + detector de persona" : ""}). Ponte en una zona y permanece un instante.`, true);
     metric("#metric-model", faceModel && personModel ? "Rostro + persona" : faceModel ? "Rostro rápido" : "Persona");
     rafId = requestAnimationFrame(now => scanFrame(now, token));
+    return true;
   } catch (error) {
-    if (token !== startToken) return;
+    if (token !== startToken) return false;
     console.error("No se pudo iniciar la cámara:", error); stopCamera(false);
     const detail = ["NotAllowedError", "PermissionDeniedError"].includes(error?.name)
       ? "Permiso denegado. Permite el acceso a la cámara desde el icono junto a la dirección."
@@ -190,7 +206,7 @@ async function startCamera() {
         : ["NotReadableError", "TrackStartError"].includes(error?.name)
           ? "La cámara está ocupada por otra aplicación. Cierra Teams, Zoom u otra app y vuelve a intentarlo."
           : `No se pudo iniciar la cámara: ${error?.message || "error desconocido"}`;
-    status(detail); metric("#metric-model", "Sin cámara");
+    status(detail); metric("#metric-model", "Sin cámara"); return false;
   }
 }
 function drawOverlay(detection) {
@@ -231,10 +247,10 @@ async function detectPresence() {
 }
 function resetPresence() {
   if (personPresent && triggeredThisPresence && latestZone >= 0) {
-    const stationId = zoneAssignments[latestZone];
+    const stationId = activeTargetStationId || zoneAssignments[latestZone];
     if (stationId && appState.mode === "public") emitEvent("lost-attention", stationId, { source: "camera-presence-ended" });
   }
-  personPresent = false; personStartedAt = 0; triggeredThisPresence = false; latestZone = -1; metric("#metric-zone", "—");
+  personPresent = false; personStartedAt = 0; triggeredThisPresence = false; latestZone = -1; activeTargetStationId = ""; metric("#metric-zone", "—");
 }
 function scanFrame(now, token) {
   if (!stream || !video || token !== startToken) { rafId = 0; return; }
@@ -262,16 +278,19 @@ function scanFrame(now, token) {
         resetPresence(); status(`${detection.kind === "face" ? "Rostro" : "Persona"} detectado, pero ocupa poco espacio. Acércate a la cámara.`, true); return;
       }
       const zone = Math.max(0, Math.min(ZONE_COUNT - 1, Math.floor((1 - ((x + w / 2) / video.videoWidth)) * ZONE_COUNT)));
-      if (personPresent && zone !== latestZone && triggeredThisPresence && appState.mode === "public") {
+      const selectedStationId = $("#camera-station")?.value || "";
+      if (personPresent && zone !== latestZone && triggeredThisPresence && !selectedStationId && appState.mode === "public") {
         const previousStationId = zoneAssignments[latestZone];
         if (previousStationId) emitEvent("lost-attention", previousStationId, { source: "camera-zone-changed" });
       }
-      if (!personPresent || zone !== latestZone) { personPresent = true; personStartedAt = performance.now(); triggeredThisPresence = false; }
+      if (!personPresent || (!selectedStationId && zone !== latestZone)) { personPresent = true; personStartedAt = performance.now(); triggeredThisPresence = false; }
       latestZone = zone; const dwellMs = performance.now() - personStartedAt;
-      const stationId = zoneAssignments[zone], station = stationId ? appState.stations.get(stationId) : null;
+      const stationId = selectedStationId || zoneAssignments[zone], station = stationId ? appState.stations.get(stationId) : null;
+      activeTargetStationId = stationId;
       metric("#metric-zone", `Z${zone + 1}${station ? ` · ${station.name}` : " · vacía"}`);
-      status(`${detection.kind === "face" ? "Rostro" : "Persona"} detectado · ${Math.round(detection.score * 100)}% · Zona ${zone + 1}${station ? ` → ${station.name}` : " sin asignar"} · ${(dwellMs / 1000).toFixed(1)} s`, true);
-      if (station && dwellMs >= Number(station.dwellMs ?? appState.config.settings.attentionThresholdMs) && !triggeredThisPresence) {
+      status(`${detection.kind === "face" ? "Rostro" : "Persona"} detectado · ${Math.round(detection.score * 100)}% · ${selectedStationId ? "Sección" : `Zona ${zone + 1}`}${station ? ` → ${station.name}` : " sin asignar"} · ${(dwellMs / 1000).toFixed(1)} s`, true);
+      if (station?.state === "cooldown") triggeredThisPresence = false;
+      if (station && station.state !== "cooldown" && dwellMs >= Number(station.dwellMs ?? appState.config.settings.attentionThresholdMs) && !triggeredThisPresence) {
         void onSustainedPresence({ confidence: detection.score, areaRatio, dwellMs, zone, station, kind: detection.kind, token });
       }
     }).catch(async error => {
@@ -296,21 +315,19 @@ async function onSustainedPresence({ confidence, areaRatio, dwellMs, zone, stati
   }
   if (!station.enabled) { status(`${station.name} está desactivada.`, true); triggeredThisPresence = true; return; }
   triggeredThisPresence = true;
-  let ageGroup = null;
-  if (kind === "face") {
-    status("Rostro detectado. Estimando un rango de edad aproximado…", true);
-    try {
-      ageGroup = await estimateAgeRange(video);
-    } catch (error) {
-      console.error("No se pudo estimar el rango de edad:", error);
-      status("No se pudo estimar la edad. Se mostrarán recomendaciones generales.", true);
-    }
-    if (!stream || token !== startToken || appState.mode !== "public") return;
-    window.dispatchEvent(new CustomEvent("beautytech:age-estimated", { detail: { ageGroup } }));
-  }
   emitEvent("entry");
-  emitEvent("attention", station.id, { proximity: Math.min(0.95, 0.45 + areaRatio * 2.5), dwellMs, orientation: null, confidence, zone: zone + 1, ageGroup, source: kind === "face" ? "blazeface-face-zone-detection" : "coco-ssd-person-zone-detection" });
-  status(`Zona ${zone + 1} detectada por IA. Activando ${station.name}.`, true);
+  emitEvent("attention", station.id, { proximity: Math.min(0.95, 0.45 + areaRatio * 2.5), dwellMs, orientation: null, confidence, zone: zone + 1, source: kind === "face" ? "blazeface-face-zone-detection" : "coco-ssd-person-zone-detection" });
+  status(`Presencia detectada por IA. Activando ${station.name}.`, true);
+  if (kind === "face") {
+    void estimateAgeRange(video).then(ageGroup => {
+      if (!stream || token !== startToken || appState.mode !== "public" || !personPresent || activeTargetStationId !== station.id) return;
+      window.dispatchEvent(new CustomEvent("beautytech:age-estimated", { detail: { stationId: station.id, ageGroup } }));
+    }).catch(error => {
+      if (!stream || token !== startToken) return;
+      console.error("No se pudo estimar el rango de edad:", error);
+      status("No se pudo estimar la edad; continúan las recomendaciones generales.", true);
+    });
+  }
 }
 export function stopCamera(updateStatus = true) {
   startToken += 1; if (rafId) cancelAnimationFrame(rafId); rafId = 0;

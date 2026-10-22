@@ -6,13 +6,13 @@
   <meta name="theme-color" content="#1b1816">
   <title>Beauty Tech — Experiencia de retail inteligente</title>
   <link rel="icon" href="assets/icons/beauty-tech.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/tokens.css?v=11">
-  <link rel="stylesheet" href="css/fonts.css?v=11">
-  <link rel="stylesheet" href="css/main.css?v=11">
-  <link rel="stylesheet" href="css/layout.css?v=11">
-  <link rel="stylesheet" href="css/components.css?v=11">
-  <link rel="stylesheet" href="css/animations.css?v=11">
-  <link rel="stylesheet" href="css/responsive.css?v=11">
+  <link rel="stylesheet" href="css/tokens.css?v=18">
+  <link rel="stylesheet" href="css/fonts.css?v=18">
+  <link rel="stylesheet" href="css/main.css?v=18">
+  <link rel="stylesheet" href="css/layout.css?v=18">
+  <link rel="stylesheet" href="css/components.css?v=18">
+  <link rel="stylesheet" href="css/animations.css?v=18">
+  <link rel="stylesheet" href="css/responsive.css?v=18">
   <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
@@ -35,7 +35,20 @@
       </div>
     </header>
 
-    <section id="admin-view" class="admin-view" aria-labelledby="admin-title">
+    <section id="worker-view" class="worker-view" aria-labelledby="worker-title">
+      <p class="eyebrow">EXPERIENCIA EN TIENDA</p>
+      <h1 id="worker-title">Prepara la tablet<br><em>en un solo paso.</em></h1>
+      <p class="worker-copy">Elige qué sección quieres mostrar y pulsa iniciar. La tablet esperará a que alguien se acerque y empezará automáticamente.</p>
+      <div class="worker-controls">
+        <label for="worker-station">Sección que quieres mostrar
+          <select id="worker-station" class="field-select"></select>
+        </label>
+        <button class="button button-primary" id="worker-start" type="button">Iniciar experiencia</button>
+      </div>
+      <p class="worker-note">La primera vez tendrás que permitir el acceso a la cámara. Para detener la experiencia, pulsa «Salir · Administración».</p>
+    </section>
+
+    <section id="admin-view" class="admin-view" aria-labelledby="admin-title" hidden>
       <div class="intro-row">
         <div>
           <p class="eyebrow">CONTROL DE EXPERIENCIA · RETAIL</p>
@@ -44,6 +57,30 @@
         </div>
         <div class="intro-stat"><span class="stat-number">06</span><span>DISPOSITIVOS<br>EN LA INSTALACIÓN</span></div>
       </div>
+
+      <section class="quick-start-panel" aria-labelledby="quick-start-title">
+        <div>
+          <p class="eyebrow">MODO PRESENTACIÓN</p>
+          <h2 id="quick-start-title">Activa una experiencia automática</h2>
+          <p>Elige la sección y pulsa iniciar. La tablet detectará la presencia y repetirá las recomendaciones hasta que la persona se aleje.</p>
+        </div>
+        <div class="quick-start-actions">
+          <label class="media-field" for="camera-station">Sección
+            <select id="camera-station" class="field-select"></select>
+          </label>
+          <button class="button button-primary" id="start-section-experience" type="button">Iniciar experiencia</button>
+        </div>
+        <details class="demo-profile">
+          <summary>Perfil de ejemplo para probar la personalización</summary>
+          <p>Selecciona un escenario. La cámara solo detecta presencia; estos rasgos no se deducen de la imagen.</p>
+          <div class="demo-profile-fields">
+            <label for="demo-age-range">Rango orientativo<select id="demo-age-range" class="field-select"><option value="">Sin especificar</option><option value="under18">Menos de 18</option><option value="18-24">18–24</option><option value="25-34">25–34</option><option value="35-44">35–44</option><option value="45-plus">45 o más</option></select></label>
+            <label for="demo-hair-texture">Textura<select id="demo-hair-texture" class="field-select"><option value="">Sin especificar</option><option value="curly">Rizado</option><option value="straight">Liso</option></select></label>
+            <label for="demo-hair-length">Longitud<select id="demo-hair-length" class="field-select"><option value="">Sin especificar</option><option value="short">Corto</option><option value="long">Largo</option></select></label>
+            <label for="demo-beard">Vello facial<select id="demo-beard" class="field-select"><option value="">Sin especificar</option><option value="beard">Con barba</option><option value="no-beard">Sin barba</option></select></label>
+          </div>
+        </details>
+      </section>
 
       <section class="control-panel" aria-labelledby="setup-title">
         <div class="section-heading">
@@ -67,7 +104,7 @@
           <div><p class="eyebrow">DETECCIÓN LOCAL EXPERIMENTAL</p><h2 id="vision-title">Prueba con cámara</h2></div>
           <span class="subtle-label">Procesamiento en este navegador</span>
         </div>
-        <p class="vision-copy">La IA detecta el rostro para estimar un rango de edad orientativo y la presencia para asignar una zona. Asigna una estación a cada zona. <strong>La edad puede ser inexacta; no identifica personas, no detecta la mirada ni confirma interés real.</strong></p>
+        <p class="vision-copy">La cámara solo detecta presencia. Los perfiles de ejemplo y la asignación de contenido son opcionales y se preparan desde Administración; no se deducen rasgos personales de la imagen.</p>
         <div class="zone-config" id="zone-config" aria-label="Asignación de zonas a estaciones">
           <p class="zone-config-title">Asigna cada zona de la cámara a una estación</p>
           <div class="zone-selects" id="zone-selects"></div>
@@ -94,7 +131,7 @@
           <div><p class="eyebrow">CONTENIDO DE LAS ESTACIONES</p><h2 id="media-title">Vídeos de demostración</h2></div>
           <span class="subtle-label">Archivos locales o enlaces</span>
         </div>
-        <p class="vision-copy">Elige una estación y prepara hasta dos vídeos MP4, WebM u Ogg: puedes cargar el archivo o pegar un enlace de YouTube, TikTok, Instagram o un enlace directo al vídeo. Los archivos y enlaces directos se reproducen dentro de la pantalla, ajustados sin texto encima. Los enlaces de redes sociales se abren en una pestaña aparte para evitar reproductores incrustados, avisos de cookies y errores de inserción; la plataforma puede pedir iniciar sesión allí.</p>
+        <p class="vision-copy">Elige una estación y prepara hasta dos vídeos para su reproducción automática en secuencia y bucle. Para que el bucle avance al terminar cada clip, usa archivos MP4, WebM u Ogg, o enlaces directos a esos formatos. Los enlaces de YouTube, TikTok e Instagram se abren fuera de la app y no forman parte del bucle automático.</p>
         <div class="media-controls">
           <label class="media-field" for="media-station">Estación
             <select id="media-station" class="field-select"></select>
@@ -107,6 +144,11 @@
               <input id="media-url-1" class="media-input media-url-input" type="url" placeholder="https://..." autocomplete="off">
             </label>
             <button class="button button-secondary media-add-url" data-media-url-slot="0" type="button">Preparar enlace</button>
+            <label class="media-field" for="media-audience-1">Asignar este vídeo a
+              <select id="media-audience-1" class="field-select media-audience">
+                <option value="all">Cualquier perfil</option><option value="curly">Pelo rizado</option><option value="straight">Pelo liso</option><option value="short">Pelo corto</option><option value="long">Pelo largo</option><option value="beard">Con barba</option><option value="no-beard">Sin barba</option><option value="under18">Menos de 18</option><option value="18-24">18–24</option><option value="25-34">25–34</option><option value="35-44">35–44</option><option value="45-plus">45 o más</option>
+              </select>
+            </label>
             <small id="media-name-1">Sin vídeo seleccionado</small>
           </div>
           <div class="media-slot">
@@ -117,6 +159,11 @@
               <input id="media-url-2" class="media-input media-url-input" type="url" placeholder="https://..." autocomplete="off">
             </label>
             <button class="button button-secondary media-add-url" data-media-url-slot="1" type="button">Preparar enlace</button>
+            <label class="media-field" for="media-audience-2">Asignar este vídeo a
+              <select id="media-audience-2" class="field-select media-audience">
+                <option value="all">Cualquier perfil</option><option value="curly">Pelo rizado</option><option value="straight">Pelo liso</option><option value="short">Pelo corto</option><option value="long">Pelo largo</option><option value="beard">Con barba</option><option value="no-beard">Sin barba</option><option value="under18">Menos de 18</option><option value="18-24">18–24</option><option value="25-34">25–34</option><option value="35-44">35–44</option><option value="45-plus">45 o más</option>
+              </select>
+            </label>
             <small id="media-name-2">Sin vídeo seleccionado</small>
           </div>
         </div>
@@ -159,12 +206,13 @@
       </section>
       <div class="public-bottom"><span>BEAUTY, PERSONALIZED.</span><span>Una nueva forma de descubrir el cuidado.</span></div>
     </section>
+    <button class="button button-secondary presentation-exit" id="presentation-exit" type="button" hidden>Salir · Administración</button>
   </main>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <!-- La IA se descarga solo al activar la cámara; el resto de la web funciona sin esos CDN. -->
   <script>
     if (location.protocol === "file:") document.getElementById("boot-warning").hidden = false;
   </script>
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/main.js?v=18"></script>
 </body>
 </html>
